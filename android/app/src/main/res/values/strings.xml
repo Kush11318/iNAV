@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">iNAV</string>
+    <string name="nav_title">iNAV Dead Reckoning</string>
+    <string name="speed_unit">km/h</string>
+    <string name="heading_unit">°</string>
+    <string name="btn_simulate_outage">Simulate GPS Blackout</string>
+    <string name="btn_stop_outage">Resume GPS Updates</string>
+    <string name="btn_realign">Recalibrate IMU Alignment</string>
+</resources>

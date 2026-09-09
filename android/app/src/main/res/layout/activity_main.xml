@@ -1,0 +1,1037 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <!-- 1. FULL-SCREEN IMMERSIVE MAP (Google Maps Paradigm) -->
+    <org.osmdroid.views.MapView
+        android:id="@+id/map_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 2. FLOATING TOP NAVIGATION & ROUTE CARD (Unified Glass Card) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_top_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="#F2161A22"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="10dp"
+        app:strokeColor="#2E3342"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Primary Navigation Status Header -->
+            <LinearLayout
+                android:id="@+id/gmaps_nav_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#1B5E20"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="10dp">
+
+                <TextView
+                    android:id="@+id/tv_top_road_icon"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="#2E7D32"
+                    android:gravity="center"
+                    android:text="📍"
+                    android:textColor="@color/white"
+                    android:textSize="20sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_top_road_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Residential"
+                        android:textColor="@color/white"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        android:id="@+id/tv_top_sub_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Continuous 15-State ES-EKF Fusion · 10 Hz"
+                        android:textColor="#C8E6C9"
+                        android:textSize="11sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
+
+                <!-- Navigation Mode Badge (Clean, High Contrast) -->
+                <TextView
+                    android:id="@+id/tv_mode_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#1B5E20"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="AIDED (GNSS)"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Destination Selector, Search Bar & Active Route Controls -->
+            <LinearLayout
+                android:id="@+id/card_route_selector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+
+                <!-- 1. Search Bar & Suggestions Picker (When Route Inactive) -->
+                <LinearLayout
+                    android:id="@+id/panel_route_picker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Explicit Start & Destination Overview (Google Maps Navigation Style) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="#151A24"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:layout_marginBottom="5dp">
+
+                        <!-- Origin / Start Point Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🟢"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="START:"
+                                android:textColor="#34D399"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tv_picker_start_label"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:text="Your Current Location (Dead Reckoning)"
+                                android:textColor="#E2E8F0"
+                                android:textSize="10sp"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+                        </LinearLayout>
+
+                        <!-- Dotted Connector -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="3dp"
+                            android:text="⫶"
+                            android:textColor="#64748B"
+                            android:textSize="9sp" />
+
+                        <!-- Destination / End Point Target Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔴"
+                                android:textSize="10sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="6dp"
+                                android:text="END:"
+                                android:textColor="#F87171"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:layout_weight="1"
+                                android:text="Search destination or tap on map"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Interactive Google Maps Search Input -->
+                    <LinearLayout
+                        android:id="@+id/container_search_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:background="#1F2430"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp">
+
+                        <TextView
+                            android:id="@+id/btn_search_icon"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:gravity="center"
+                            android:text="🔍"
+                            android:textSize="13sp"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <EditText
+                            android:id="@+id/et_search_destination"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:background="@null"
+                            android:hint="Search destination or enter lat, lon..."
+                            android:textColorHint="#64748B"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:imeOptions="actionSearch"
+                            android:inputType="text"
+                            android:singleLine="true" />
+
+                        <TextView
+                            android:id="@+id/btn_clear_search"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:gravity="center"
+                            android:text="✕"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp"
+                            android:visibility="gone"
+                            android:clickable="true"
+                            android:focusable="true" />
+                    </LinearLayout>
+
+                    <!-- Explicit 1-Tap Map Layer Switcher (OSM vs Satellite) & Fetch GPS -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="34dp"
+                        android:layout_marginTop="6dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <!-- Segmented Switcher: [ 🗺️ OSM Street ] [ 🛰️ Satellite ] -->
+                        <LinearLayout
+                            android:id="@+id/container_layer_segmented"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:background="#151A24"
+                            android:orientation="horizontal"
+                            android:padding="2dp">
+
+                            <TextView
+                                android:id="@+id/btn_osm_view"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:text="🗺️ OSM Street"
+                                android:textColor="@color/white"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:background="#1E40AF"
+                                android:clickable="true"
+                                android:focusable="true" />
+
+                            <TextView
+                                android:id="@+id/btn_sat_view"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:gravity="center"
+                                android:text="🛰️ Satellite"
+                                android:textColor="#94A3B8"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:clickable="true"
+                                android:focusable="true" />
+                        </LinearLayout>
+
+                        <!-- Explicit Fetch GPS Button -->
+                        <TextView
+                            android:id="@+id/btn_fetch_gps_now"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="6dp"
+                            android:background="#065F46"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingHorizontal="10dp"
+                            android:text="📍 Fetch GPS"
+                            android:textColor="@color/white"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Dynamic Place Suggestions Container (shown when searching) -->
+                    <LinearLayout
+                        android:id="@+id/container_search_suggestions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_marginTop="4dp">
+                        <!-- Populated dynamically with search matches -->
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 2. Active Route: START POINT & END POINT Visual Header -->
+                <LinearLayout
+                    android:id="@+id/panel_active_route"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <!-- START POINT Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="20dp"
+                            android:layout_height="wrap_content"
+                            android:text="🟢"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tv_active_start_title"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:text="START: Your Location"
+                            android:textColor="#A7F3D0"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+                    </LinearLayout>
+
+                    <!-- Dotted Line Divider -->
+                    <View
+                        android:layout_width="2dp"
+                        android:layout_height="8dp"
+                        android:layout_marginStart="9dp"
+                        android:background="#475569" />
+
+                    <!-- END POINT & METRICS Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="20dp"
+                            android:layout_height="wrap_content"
+                            android:text="🔴"
+                            android:textSize="12sp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tv_active_dest_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="END: Metro Underground Tunnel"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+
+                            <TextView
+                                android:id="@+id/tv_active_route_metrics"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Remaining: 2.4 km · ETA: 7 min · OSRM Route"
+                                android:textColor="#38BDF8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_cancel_route"
+                            android:layout_width="wrap_content"
+                            android:layout_height="34dp"
+                            android:text="END ROUTE"
+                            android:textColor="@color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            app:backgroundTint="#B71C1C"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 3. FLOATING OUTAGE BANNER: Live Google Maps vs iNAV Differentiator -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/outage_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="8dp"
+        app:cardBackgroundColor="#E62C1242"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#7B1FA2"
+        app:strokeWidth="1dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/card_top_nav">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingVertical="6dp"
+            android:paddingHorizontal="12dp">
+
+            <TextView
+                android:id="@+id/tv_outage_timer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="⚠️ GPS BLACKOUT: 0.0s | PURE DEAD RECKONING ACTIVE"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <!-- Side-by-Side Comparison Badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_gmaps_vs_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#B71C1C"
+                    android:gravity="center"
+                    android:paddingVertical="3dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="GOOGLE MAPS: ❌ SIGNAL LOST"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="1dp" />
+
+                <TextView
+                    android:id="@+id/tv_inav_vs_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#00C853"
+                    android:gravity="center"
+                    android:paddingVertical="3dp"
+                    android:paddingHorizontal="4dp"
+                    android:text="iNAV: ✅ DEAD RECKONING"
+                    android:textColor="@color/black"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 4. FLOATING MAP ACTION BUTTONS (Right Edge Vertical Stack) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        app:layout_constraintTop_toBottomOf="@id/outage_banner"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Map Layers FAB (Cesium Ion Satellite / Street) -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_layers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Map Layers and Satellite"
+            android:src="@drawable/ic_layers"
+            app:backgroundTint="#D91E222A"
+            app:tint="#F59E0B"
+            app:fabSize="mini" />
+
+        <!-- Compass FAB -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_compass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Compass Reset North"
+            android:src="@android:drawable/ic_menu_compass"
+            app:backgroundTint="#D91E222A"
+            app:tint="#EF4444"
+            app:fabSize="mini" />
+
+        <!-- Track-Up Toggle -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_track_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Toggle Track-Up Follow"
+            android:src="@android:drawable/ic_menu_directions"
+            app:backgroundTint="#D91E222A"
+            app:tint="#38BDF8"
+            app:fabSize="mini" />
+
+        <!-- My Location Re-center -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_my_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Center Location"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:backgroundTint="#D91E222A"
+            app:tint="#4ADE80"
+            app:fabSize="mini" />
+    </LinearLayout>
+
+    <!-- 5. 3D ARTIFICIAL HORIZON COCKPIT GAUGE (Bottom Left Floating Dial) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_attitude"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginBottom="14dp"
+        app:cardBackgroundColor="#E60F172A"
+        app:cardCornerRadius="33dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#334155"
+        app:strokeWidth="1.5dp"
+        app:layout_constraintBottom_toTopOf="@id/bottom_cockpit_card"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.inav.navigation.ui.AttitudeIndicatorView
+            android:id="@+id/attitude_indicator"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="2dp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 6. FLOATING BOTTOM NAVIGATION & SENSOR COCKPIT (Google Maps Style) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottom_cockpit_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="12dp"
+        app:cardBackgroundColor="#F2141720"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
+        app:strokeColor="#282D3C"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Primary Metrics Bar: Speed, Heading, Outage Toggle -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Speedometer Display -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_speed_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.0"
+                        android:textColor="#38BDF8"
+                        android:textSize="32sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SPEED (KM/H)"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="40dp"
+                    android:background="#2E3342" />
+
+                <!-- Heading & Road Status -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_heading_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0° N"
+                        android:textColor="@color/white"
+                        android:textSize="26sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="HEADING / COMPASS"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="40dp"
+                    android:background="#2E3342" />
+
+                <!-- Simulate Outage (Tunnel Test) Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_toggle_outage"
+                    android:layout_width="0dp"
+                    android:layout_height="46dp"
+                    android:layout_weight="1.2"
+                    android:layout_marginStart="8dp"
+                    android:text="BLACKOUT"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="#D32F2F"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+
+            <!-- Road Event & Uncertainty Badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_road_event"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Road: Detecting..."
+                    android:textColor="#E2E8F0"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tv_road_snapped_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:background="#1B5E20"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:text="ROAD LOCKED"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_uncertainty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="σ: ±0.30 m"
+                    android:textColor="#4ADE80"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Toggle Cockpit Details Header (Swipe / Tap Handle) -->
+            <LinearLayout
+                android:id="@+id/header_toggle_sensors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="#1E2330"
+                android:gravity="center"
+                android:paddingVertical="6dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/tv_sensors_toggle_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▼ ALL SENSORS LIVE STREAM · TAP TO INSPECT"
+                    android:textColor="#38BDF8"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.08"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Expandable Sensors Detail Container -->
+            <LinearLayout
+                android:id="@+id/container_sensors_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <!-- Sensor Row 1: Magnetometer & Gyroscope -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <!-- Magnetometer Panel -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🧭 MAGNETOMETER"
+                            android:textColor="@color/accent_amber"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_mag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="B: [0.0, 0.0, 0.0] µT\nMag Hdg: 0° (N)"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Gyroscope Panel -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌀 GYROSCOPE"
+                            android:textColor="#38BDF8"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_gyro"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ω: [0.0, 0.0, 0.0] °/s\nBias b_ω: 0.02 °/s"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Sensor Row 2: Accelerometer & Barometer -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <!-- Accelerometer Panel -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚡ ACCELEROMETER"
+                            android:textColor="@color/accent_green"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_accel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="a: [0.0, 0.0, 9.81] m/s²\nLin Fwd: 0.0 m/s²"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Barometer Panel -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏔️ BAROMETER"
+                            android:textColor="#BA68C8"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_baro"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1013.2 hPa | Alt: 540 m\nClimb: 0.0 m/s | Grade: 0%"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Sensor Row 3: GNSS Raw & Environment -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <!-- GNSS Raw Stats -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🛰️ GNSS CONSTELLATION"
+                            android:textColor="#4FC3F7"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_gnss"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="18 Sats View | 12 Used\nFix: 3D DGPS Multi"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <!-- Environment & OBD-II -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:background="#1A2230"
+                        android:orientation="vertical"
+                        android:padding="6dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💡 ENVIRONMENT / OBD"
+                            android:textColor="#FFD54F"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tv_sensor_env"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Light: 350 lx (Daylight)\nOBD: Disconnected | k: 1.0"
+                            android:textColor="@color/white"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Coordinates Footnote -->
+                <TextView
+                    android:id="@+id/tv_coordinates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Lat: 0.000000 | Lon: 0.000000 | Pitch: 0.0° | Roll: 0.0°"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="9sp"
+                    android:gravity="center" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 7. HUD WINDSHIELD PROJECTION OVERLAY -->
+    <FrameLayout
+        android:id="@+id/hud_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/tv_hud_mode_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="iNAV HUD · WINDSHIELD PROJECTION"
+                android:textColor="#00E5FF"
+                android:textSize="14sp"
+                android:letterSpacing="0.2"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_hud_speed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0"
+                android:textColor="#FFFFFF"
+                android:textSize="96sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="KM/H"
+                android:textColor="#9E9E9E"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tv_hud_heading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="HEADING: 0° N"
+                android:textColor="#00E676"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_hud_road"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="ROAD LOCKED: UNDERGROUND METRO TUNNEL"
+                android:textColor="#FFD600"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="TAP SCREEN TO EXIT HUD MODE"
+                android:textColor="#757575"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

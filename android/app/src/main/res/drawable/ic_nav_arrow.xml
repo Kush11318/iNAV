@@ -1,0 +1,42 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+  <!-- 1. Outer Pulsing Glow Ring (Accuracy Halo) — soft radial gradient feel -->
+  <path
+      android:fillColor="#0C4FC3F7"
+      android:pathData="M24,24m-22,0a22,22 0,1,1 44,0a22,22 0,1,1 -44,0" />
+
+  <!-- 2. Mid Glow Ring -->
+  <path
+      android:fillColor="#184FC3F7"
+      android:pathData="M24,24m-16,0a16,16 0,1,1 32,0a16,16 0,1,1 -32,0" />
+
+  <!-- 3. Heading Direction Beam (Triangular Light Cone) -->
+  <path
+      android:fillColor="#304FC3F7"
+      android:pathData="M24,2 L30,18 L24,15 L18,18 Z" />
+
+  <!-- 4. Crisp White Outer Ring Border -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M24,24m-10,0a10,10 0,1,1 20,0a10,10 0,1,1 -20,0" />
+
+  <!-- 5. Vivid Core Navigation Circle (Premium Cyan-Blue) -->
+  <path
+      android:fillColor="#4FC3F7"
+      android:pathData="M24,24m-7.5,0a7.5,7.5 0,1,1 15,0a7.5,7.5 0,1,1 -15,0" />
+
+  <!-- 6. Inner Depth Ring (subtle dark ring for 3D depth) -->
+  <path
+      android:fillColor="#2003A9F4"
+      android:pathData="M24,24m-5,0a5,5 0,1,1 10,0a5,5 0,1,1 -10,0" />
+
+  <!-- 7. White Heading Pointer Arrow (crisp directional indicator) -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M24,14.5 L27.8,23 L24,21 L20.2,23 Z" />
+
+</vector>
