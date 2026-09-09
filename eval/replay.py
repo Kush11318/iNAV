@@ -24,7 +24,6 @@ from modules.alignment import AlignmentEngine
 from modules.ukf import UKFNavigationFilter
 from modules.esekf import ESEKFNavigationFilter
 from modules.velocity_net import VelocityNetPredictor
-from modules.spectra_net import SpectraNetPredictor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,13 +33,13 @@ logging.basicConfig(
 logger = logging.getLogger("iNAV.replay")
 
 
-def run_inav_spectra_esekf_pipeline(
+def run_inav_esekf_pipeline(
     df_outage: pd.DataFrame,
     init_lat: float,
     init_lon: float,
     init_speed_ms: float,
     init_heading_deg: float,
-    predictor: Optional[SpectraNetPredictor] = None,
+    predictor: Optional[VelocityNetPredictor] = None,
     alignment: Optional[AlignmentEngine] = None,
     k_scale: float = 1.0,
     init_gyro_bias_z: float = 0.0,
@@ -50,15 +49,15 @@ def run_inav_spectra_esekf_pipeline(
 ):
     """
     Upgraded iNAV Pipeline (Pillars 1-5):
-    15-State ES-EKF + Joseph Covariance + NIS Outlier Gating + AI Velocity Prediction + NHC.
+    15-State ES-EKF + Joseph Covariance + NIS Outlier Gating + VelocityNet AI Velocity Prediction + NHC.
     """
     n = len(df_outage)
     if n == 0:
         return np.array([]), np.array([]), np.array([])
 
     if predictor is None:
-        best_pt = config.MODELS_DIR / "spectra_net_best.pt"
-        predictor = SpectraNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
+        best_pt = config.MODELS_DIR / "velocity_net_best.pt"
+        predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
 
     acc_raw = df_outage[[config.COL_ACC_X, config.COL_ACC_Y, config.COL_ACC_Z]].values
     gyro_raw = df_outage[[config.COL_GYRO_X, config.COL_GYRO_Y, config.COL_GYRO_Z]].values
@@ -380,9 +379,9 @@ def evaluate_run_outages(
                 df_sub, init_lat, init_lon, init_spd, init_hdg,
                 predictor=predictor, alignment=run_align, k_scale=active_k
             )
-        elif method in ["inav_spectra_esekf", "inav_spectra_esekf_v2"]:
-            cfg_name = "inav_spectra_esekf_v2"
-            p_lat, p_lon, _ = run_inav_spectra_esekf_pipeline(
+        elif method in ["inav_esekf", "inav_spectra_esekf", "inav_spectra_esekf_v2"]:
+            cfg_name = "inav_esekf"
+            p_lat, p_lon, _ = run_inav_esekf_pipeline(
                 df_sub, init_lat, init_lon, init_spd, init_hdg,
                 predictor=predictor, alignment=run_align, k_scale=active_k
             )
@@ -462,7 +461,7 @@ if __name__ == "__main__":
         "--method",
         type=str,
         default="all",
-        choices=["all", "strapdown", "constant_velocity", "inav_ukf", "inav_spectra_esekf_v2"],
+        choices=["all", "strapdown", "constant_velocity", "inav_ukf", "inav_esekf"],
         help="Specific method to evaluate or 'all'"
     )
     parser.add_argument(
@@ -473,6 +472,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    eval_methods = ["constant_velocity", "strapdown", "inav_ukf", "inav_spectra_esekf_v2"] if args.method == "all" else [args.method]
+    eval_methods = ["constant_velocity", "strapdown", "inav_ukf", "inav_esekf"] if args.method == "all" else [args.method]
     limit = args.max_runs if args.max_runs > 0 else None
     run_benchmark_suite(methods=eval_methods, test_runs_limit=limit)

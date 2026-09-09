@@ -44,6 +44,7 @@ android/app/.cxx/
 # Large Datasets (reproducible via ingest.py / sync.py / windowize.py)
 data/processed/
 *.parquet
+!data/sample_test_trajectory*.parquet
 *.npz
 
 # Test captures and temporary debug files

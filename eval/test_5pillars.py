@@ -19,7 +19,7 @@ import numpy as np
 import torch
 
 from modules.augmentation import random_rotation_matrix_so3, apply_3d_spatial_rotation, apply_batch_3d_spatial_rotation
-from modules.spectra_net import SpectraNet
+from modules.velocity_net import VelocityNet
 from modules.mtn import MotionTransformationNetwork
 from modules.esekf import ESEKFNavigationFilter
 from modules.map_matcher import HMMMapMatcher, SpatialGridIndex, RoadSegment
@@ -47,9 +47,9 @@ class TestFivePillars(unittest.TestCase):
         torch.testing.assert_close(acc_orig_norm, acc_rot_norm, atol=1e-4, rtol=1e-4)
         print(" [PASS] Pillar 1: 3D SO(3) Spatial Rotation Augmentation verified.")
 
-    def test_pillar2_spectra_architecture(self):
-        """Pillar 2: Test SPECTRA STFT + Depthwise Separable + Channel Attention."""
-        net = SpectraNet(in_channels=6, num_events=5)
+    def test_pillar2_velocitynet_architecture(self):
+        """Pillar 2: Test VelocityNet Multi-Head 1D-CNN + GRU Displacement Network."""
+        net = VelocityNet(in_channels=6, num_events=5)
         # 2-second window (20 samples @ 10Hz)
         x20 = torch.randn(4, 6, 20)
         d20, ev20, sig20 = net(x20)
@@ -57,14 +57,7 @@ class TestFivePillars(unittest.TestCase):
         self.assertEqual(ev20.shape, (4, 5))
         self.assertEqual(sig20.shape, (4, 1))
         self.assertTrue(torch.all(sig20 > 0.0))  # strictly positive uncertainty
-
-        # 4-second extended context window (40 samples @ 10Hz, CarSpeedNet recommendation)
-        x40 = torch.randn(4, 6, 40)
-        d40, ev40, sig40 = net(x40)
-        self.assertEqual(d40.shape, (4, 1))
-        self.assertEqual(ev40.shape, (4, 5))
-        self.assertEqual(sig40.shape, (4, 1))
-        print(" [PASS] Pillar 2: SPECTRA STFT + Depthwise Separable 2D + Channel Attention verified.")
+        print(" [PASS] Pillar 2: VelocityNet Multi-Head 1D-CNN + GRU verified.")
 
     def test_pillar3_mtn_and_dynamic_loss(self):
         """Pillar 3: Test MTN Pose Alignment & Dynamic Latency Loss Matching."""

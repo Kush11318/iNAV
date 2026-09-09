@@ -94,3 +94,23 @@ iNAV/
 | 50m Outage (< 1 min) | < 5m drift | **< 3.5m drift** |
 | 1km Outage (@ 60 km/h) | < 100m drift | **< 60m drift** |
 | Update Rate | 10 Hz | **10 Hz Filter, 60 fps UI** |
+
+---
+
+## 🚀 Quick Start: Testing the Final Model
+
+To verify the final **VelocityNet** Dead Reckoning model on real-world driving trajectory data:
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Run instant benchmark on included synchronized Parquet trajectory
+python test_final_model.py
+
+# 3. Test on full 8-minute motorway trajectory with GNSS blackouts
+python test_final_model.py --parquet data/sample_test_trajectory_motorway.parquet
+
+# 4. Verify all core pillars and integration tests
+python eval/test_5pillars.py
+```
