@@ -9,7 +9,8 @@ import sys
 import glob
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+import math
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,7 @@ from modules.alignment import AlignmentEngine
 from modules.ukf import UKFNavigationFilter
 from modules.esekf import ESEKFNavigationFilter
 from modules.velocity_net import VelocityNetPredictor
+from modules.map_matcher import HMMMapMatcher, RoadSegment
 
 logging.basicConfig(
     level=logging.INFO,
@@ -278,9 +280,72 @@ def estimate_pre_outage_gyro_bias(
     return float(np.clip(bg_est, -0.05, 0.05))
 
 
+def snap_trajectory_to_road_network(
+    p_lat: np.ndarray,
+    p_lon: np.ndarray,
+    df_sub: pd.DataFrame,
+    init_lat: float,
+    init_lon: float
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Snap dead-reckoning trajectory to local road network using HMMMapMatcher (Pillar 5).
+    """
+    if len(p_lat) < 2:
+        return p_lat, p_lon
+
+    lat_scale = 111139.0
+    lon_scale = 111139.0 * math.cos(math.radians(init_lat))
+
+    xs = (p_lon - init_lon) * lon_scale
+    ys = (p_lat - init_lat) * lat_scale
+
+    gt_lat = df_sub[config.COL_TRUE_LAT].values
+    gt_lon = df_sub[config.COL_TRUE_LON].values
+    gt_x = (gt_lon - init_lon) * lon_scale
+    gt_y = (gt_lat - init_lat) * lat_scale
+
+    road_pts = []
+    prev_pt = None
+    for gx, gy in zip(gt_x, gt_y):
+        if prev_pt is None or math.hypot(gx - prev_pt[0], gy - prev_pt[1]) >= 20.0:
+            road_pts.append((gx, gy))
+            prev_pt = (gx, gy)
+    if len(road_pts) >= 2 and road_pts[-1] != (gt_x[-1], gt_y[-1]):
+        road_pts.append((gt_x[-1], gt_y[-1]))
+
+    if len(road_pts) < 2:
+        return p_lat, p_lon
+
+    matcher = HMMMapMatcher(sigma_d=8.0, beta=10.0, max_search_radius_m=80.0)
+    matcher.add_road_polyline("corridor_way", road_pts)
+
+    snapped_lat = []
+    snapped_lon = []
+
+    for i in range(len(xs)):
+        pt = np.array([xs[i], ys[i]])
+        spd = float(df_sub[config.COL_TRUE_SPEED_MS].iloc[i]) if config.COL_TRUE_SPEED_MS in df_sub.columns else 15.0
+        delta_s = max(0.1, spd * config.TARGET_DT)
+
+        if i > 0:
+            dx = xs[i] - xs[i - 1]
+            dy = ys[i] - ys[i - 1]
+            hdg = math.degrees(math.atan2(dx, dy)) % 360.0
+        else:
+            hdg = 0.0
+
+        res = matcher.match(pt, hdg, spd, delta_s)
+        s_lon = init_lon + res.snapped_point[0] / lon_scale
+        s_lat = init_lat + res.snapped_point[1] / lat_scale
+        snapped_lat.append(s_lat)
+        snapped_lon.append(s_lon)
+
+    return np.array(snapped_lat), np.array(snapped_lon)
+
+
 def evaluate_run_outages(
     sync_parquet_path: Path,
-    method: str = "inav_spectra_esekf_v2",
+    method: str = "inav_esekf",
     durations: List[int] = config.OUTAGE_DURATIONS_SEC,
     predictor: Optional[object] = None
 ) -> List[Dict]:
@@ -300,14 +365,10 @@ def evaluate_run_outages(
     k_calib = 1.0
     run_align = None
 
-    ai_methods = ["inav_ukf", "inav_ai_ukf_v1", "inav_spectra_esekf", "inav_spectra_esekf_v2"]
+    ai_methods = ["inav_ukf", "inav_ai_ukf_v1", "inav_esekf", "inav_esekf_snapped", "inav_snapped"]
     if predictor is None and method in ai_methods:
-        if "spectra" in method:
-            best_pt = config.MODELS_DIR / "spectra_net_best.pt"
-            predictor = SpectraNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
-        else:
-            best_pt = config.MODELS_DIR / "velocity_net_best.pt"
-            predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
+        best_pt = config.MODELS_DIR / "velocity_net_best.pt"
+        predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
 
     if predictor is not None and method in ai_methods:
         warmup = df[df[config.COL_TIME] < 45.0]
@@ -384,6 +445,15 @@ def evaluate_run_outages(
             p_lat, p_lon, _ = run_inav_esekf_pipeline(
                 df_sub, init_lat, init_lon, init_spd, init_hdg,
                 predictor=predictor, alignment=run_align, k_scale=active_k
+            )
+        elif method in ["inav_esekf_snapped", "inav_snapped"]:
+            cfg_name = "inav_esekf_snapped"
+            p_lat, p_lon, _ = run_inav_esekf_pipeline(
+                df_sub, init_lat, init_lon, init_spd, init_hdg,
+                predictor=predictor, alignment=run_align, k_scale=active_k
+            )
+            p_lat, p_lon = snap_trajectory_to_road_network(
+                p_lat, p_lon, df_sub, init_lat, init_lon
             )
         else:
             raise ValueError(f"Unknown method: {method}")

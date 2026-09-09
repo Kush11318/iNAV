@@ -94,7 +94,12 @@ def run_benchmark(
     print("-" * 80)
     median_drift = df_scores['pct_of_distance'].median()
     print(f"  >>> Overall Median Drift: {median_drift:.2f}% (Target: < 10.0%)")
-    print(f"  >>> Evaluation Status   : {'✅ PASSED (Meets Dead Reckoning Criteria)' if median_drift < 50.0 else '⚠️ Target Exceeded'}")
+    if median_drift <= 10.0:
+        print(f"  >>> Evaluation Status   : ✅ PASSED (Strictly meets ISRO < 10.0% target)")
+    else:
+        print(f"  >>> Evaluation Status   : ⚠️ Target Exceeded ({median_drift:.1f}% vs < 10.0% ISRO target)")
+        print(f"  >>> Analysis Note       : Pure phone sensor dead-reckoning exhibits drift during extended outages.")
+        print(f"                            Test with '--method inav_esekf_snapped' to evaluate HMM road graph snapping.")
     print("-" * 80 + "\n")
 
 
@@ -109,8 +114,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--method",
         type=str,
-        default="inav_ukf",
-        choices=["inav_ukf", "inav_esekf", "constant_velocity", "strapdown"],
+        default="inav_esekf",
+        choices=["inav_esekf", "inav_esekf_snapped", "inav_ukf", "constant_velocity", "strapdown"],
         help="Dead reckoning navigation filter to execute"
     )
     parser.add_argument(

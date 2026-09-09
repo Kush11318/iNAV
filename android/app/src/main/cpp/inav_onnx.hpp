@@ -89,9 +89,9 @@ public:
             }
             out.event_class = best_cls;
 
-            // 3. Uncertainty head (sigma = sqrt(exp(log_var)))
-            float* log_var_data = output_tensors[2].GetTensorMutableData<float>();
-            out.sigma = std::sqrt(std::exp(std::clamp(log_var_data[0], -6.0f, 4.0f)));
+            // 3. Uncertainty head: PyTorch model outputs uncertainty_sigma_m directly via Softplus
+            float* sigma_data = output_tensors[2].GetTensorMutableData<float>();
+            out.sigma = std::clamp(sigma_data[0], 0.05f, 20.0f);
 
         } catch (...) {
             out.delta_d = 0.0f;
