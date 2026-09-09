@@ -55,6 +55,7 @@ data/processed/
 !android/app/src/main/res/**/*.jpg
 *.kml
 *.log
+*.apk
 android/test_mission.kml
 android/ui.xml
 
