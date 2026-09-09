@@ -15,7 +15,6 @@ import numpy as np
 sys.path.append(str(Path(__file__).resolve().parent))
 import config
 from modules.velocity_net import VelocityNet
-from modules.spectra_net import SpectraNet
 from modules.augmentation import apply_batch_3d_spatial_rotation
 
 logging.basicConfig(
@@ -103,12 +102,8 @@ def train_velocity_net(
     train_loader = DataLoader(TensorDataset(X_train_t, y_d_train_t, y_ev_train_t), batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(TensorDataset(X_val_t, y_d_val_t, y_ev_val_t), batch_size=batch_size * 2, shuffle=False)
 
-    if architecture.lower() == "spectra":
-        model = SpectraNet(in_channels=6, num_events=5).to(device)
-        best_model_path = config.MODELS_DIR / "spectra_net_best.pt"
-    else:
-        model = VelocityNet(in_channels=6, num_events=5).to(device)
-        best_model_path = config.MODELS_DIR / "velocity_net_best.pt"
+    model = VelocityNet(in_channels=6, num_events=5).to(device)
+    best_model_path = config.MODELS_DIR / "velocity_net_best.pt"
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
@@ -197,8 +192,7 @@ def train_velocity_net(
             logger.info(f"Saved new best model checkpoint to {best_model_path.name} (Val MAE: {val_d_mae:.3f}m)")
 
     # Export to ONNX for edge deployment
-    onnx_name = "spectra_net.onnx" if architecture.lower() == "spectra" else "velocity_net_v1.onnx"
-    onnx_path = config.MODELS_DIR / onnx_name
+    onnx_path = config.MODELS_DIR / "velocity_net.onnx"
     try:
         dummy_input = torch.randn(1, 6, 20, device=device)
         torch.onnx.export(
@@ -219,11 +213,10 @@ def train_velocity_net(
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="iNAV VelocityNet / SpectraNet Training")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
+    parser = argparse.ArgumentParser(description="iNAV VelocityNet Training")
+    parser.add_argument("--epochs", type=int, default=8, help="Number of training epochs")
     parser.add_argument("--batch-size", type=int, default=128, help="Batch size")
     parser.add_argument("--subsample", type=float, default=0.5, help="Fraction of train data to use for fast screening")
-    parser.add_argument("--arch", type=str, default="spectra", choices=["spectra", "baseline_vnet"], help="Model architecture")
     parser.add_argument("--no-augment", action="store_true", help="Disable 3D SO(3) rotation augmentation")
     args = parser.parse_args()
 
@@ -231,6 +224,5 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         subsample_ratio=args.subsample,
-        architecture=args.arch,
         augment_3d_rot=not args.no_augment
     )

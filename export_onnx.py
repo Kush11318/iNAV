@@ -96,64 +96,10 @@ def export_velocity_net_onnx(
         logger.info("ONNX Runtime parity verified: PyTorch and ONNX outputs match perfectly!")
     except ImportError:
         logger.info("ONNX Runtime parity verified: PyTorch and ONNX outputs match perfectly!")
-    except ImportError:
         logger.info("onnxruntime not installed, skipping runtime numerical parity test.")
 
     return onnx_path
 
 
-def export_spectra_net_onnx(
-    model_path: Path = config.MODELS_DIR / "spectra_net_best.pt",
-    onnx_path: Path = config.MODELS_DIR / "spectra_net.onnx",
-    window_size: int = config.WINDOW_SIZE
-) -> Path:
-    """
-    Export trained PyTorch SpectraNet checkpoint (Pillar 2) to ONNX format.
-    """
-    from modules.spectra_net import SpectraNet
-
-    if not model_path.exists():
-        raise FileNotFoundError(f"SpectraNet checkpoint not found: {model_path}")
-
-    logger.info(f"Loading SpectraNet checkpoint from {model_path}...")
-    checkpoint = torch.load(model_path, map_location="cpu")
-
-    model = SpectraNet(in_channels=6, num_events=5)
-    state_dict = checkpoint["model_state_dict"] if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint else checkpoint
-    model.load_state_dict(state_dict)
-    model.eval()
-
-    dummy_input = torch.randn(1, 6, window_size, dtype=torch.float32)
-
-    logger.info(f"Exporting SpectraNet to ONNX at {onnx_path}...")
-    torch.onnx.export(
-        model,
-        dummy_input,
-        str(onnx_path),
-        export_params=True,
-        opset_version=18,
-        do_constant_folding=True,
-        input_names=["imu_window"],
-        output_names=["displacement_m", "event_logits", "uncertainty_sigma_m"],
-        dynamic_axes={
-            "imu_window": {0: "batch_size"},
-            "displacement_m": {0: "batch_size"},
-            "event_logits": {0: "batch_size"},
-            "uncertainty_sigma_m": {0: "batch_size"}
-        }
-    )
-
-    logger.info(f"Successfully exported SpectraNet ONNX model to {onnx_path} ({onnx_path.stat().st_size / 1024:.1f} KB)")
-    return onnx_path
-
-
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Export iNAV models to ONNX")
-    parser.add_argument("--arch", type=str, default="spectra", choices=["spectra", "vnet", "all"])
-    args = parser.parse_args()
-
-    if args.arch in ["vnet", "all"]:
-        export_velocity_net_onnx()
-    if args.arch in ["spectra", "all"]:
-        export_spectra_net_onnx()
+    export_velocity_net_onnx()
