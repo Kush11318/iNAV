@@ -1,0 +1,682 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"neutral-950":"#0b0b0b","neutral-900":"#111111","neutral-850":"#1a1a1a","neutral-800":"#222222","neutral-700":"#444444","neutral-600":"#666666","neutral-500":"#888888","neutral-400":"#aaaaaa","neutral-300":"#cccccc","neutral-200":"#e5e5e5","neutral-100":"#f4f4f4","neutral-50":"#fafafa"},"borderRadius":{"DEFAULT":"0px","none":"0px","sm":"1px","md":"2px","lg":"3px","full":"9999px"},"fontFamily":{"sans":["Inter","system-ui","sans-serif"],"mono":["JetBrains Mono","monospace"]},"fontSize":{"body-md":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"12px","letterSpacing":"0.05em","fontWeight":"500"}],"label-md":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"500"}],"headline-sm":["13px",{"lineHeight":"18px","letterSpacing":"-0.005em","fontWeight":"600"}],"headline-md":["16px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-lg":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["20px",{"lineHeight":"26px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"body-lg":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}}</script></head><body class="bg-[#f7f7f7] font-sans text-black min-h-screen antialiased"><header class="fixed top-0 w-full z-50 bg-black text-white border-b border-neutral-800"><div class="h-12 w-full px-5 flex items-center justify-between gap-4"><div class="flex items-center gap-6 flex-shrink-0"><div class="flex items-center gap-2 py-1"><div class="w-6 h-6 bg-white text-black flex items-center justify-center font-mono font-bold text-[12px]">V</div><div class="flex items-baseline gap-1.5"><span class="font-mono text-sm tracking-wider font-bold text-white uppercase">VOYAGER</span><span class="font-mono text-[11px] text-neutral-400 font-normal">/ EDGE DIAGNOSTICS</span></div></div><div class="h-4 w-px bg-neutral-800"></div><nav class="flex items-center gap-2 h-12 font-mono text-[11px] uppercase tracking-wider"><a class="text-neutral-400 hover:text-white px-2 h-full flex items-center transition-colors" data-path="live-runs" href="#">Live Runs</a><a aria-current="page" class="px-2 h-full flex items-center transition-colors text-white border-b-2 border-white font-medium" data-path="route-analysis" href="#">Route Analysis</a><a class="text-neutral-400 hover:text-white px-2 h-full flex items-center transition-colors" data-path="dataset-runs" href="#">Dataset Runs</a><a class="text-neutral-400 hover:text-white px-2 h-full flex items-center transition-colors" data-path="models" href="#">Models</a><a class="text-neutral-400 hover:text-white px-2 h-full flex items-center transition-colors" data-path="devices" href="#">Devices</a><a class="text-neutral-400 hover:text-white px-2 h-full flex items-center transition-colors" data-path="settings" href="#">Settings</a></nav></div><div class="flex items-center gap-3 flex-shrink-0 font-mono"><span class="text-[10px] px-2 py-0.5 bg-neutral-900 text-neutral-300 border border-neutral-700 uppercase font-medium">PROD-EDGE v2.4.1</span><div class="flex items-center gap-1.5 bg-neutral-900 px-2 py-0.5 border border-neutral-800 text-[11px]"><span class="material-symbols-outlined text-neutral-400 text-[13px]">database</span><span class="text-white font-medium">DS-CAN-982</span><span class="material-symbols-outlined text-neutral-400 text-[12px]">expand_more</span></div><div class="flex items-center gap-1.5 px-2 py-0.5 text-neutral-400 text-[11px]"><span class="material-symbols-outlined text-neutral-500 text-[13px]">schedule</span><span>UTC 14:02:45</span></div><button class="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">notifications</span></button><div class="h-4 w-px bg-neutral-800"></div><div class="flex items-center gap-2 pl-1"><div class="w-7 h-7 bg-neutral-800 border border-neutral-700 flex items-center justify-center text-[11px] font-bold text-white">CP</div><div class="flex flex-col text-left"><span class="text-[11px] text-white font-medium leading-tight">C. PATEL</span><span class="text-neutral-500 text-[9px] leading-tight">LEAD GNSS/INS</span></div></div></div></div></header><main class="w-full pt-12 bg-[#f7f7f7] min-h-[calc(100vh-3rem)]"><div class="flex flex-col w-full">
+<!-- Run Header -->
+<section class="w-full bg-white border-b border-neutral-200 px-5 py-3">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+<div class="flex flex-col gap-1.5">
+<div class="flex flex-wrap items-center gap-2">
+<span class="font-mono text-[17px] font-bold text-black tracking-tight">RUN-2025-0814-SF-URBAN</span>
+<span class="inline-flex items-center gap-1.5 px-2 py-[2px] bg-black text-white font-mono text-[10px] uppercase font-semibold">
+<span class="w-1.5 h-1.5 bg-white"></span>
+            EVALUATED • COMPLETE
+          </span>
+<span class="font-mono text-[10px] text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-[2px] uppercase">
+            IO-VNBD (SF Financial District Urban Canyon)
+          </span>
+<span class="font-mono text-[10px] text-neutral-700 bg-neutral-100 border border-neutral-200 px-2 py-[2px] uppercase">
+            Sedan Testbed #04
+          </span>
+</div>
+<div class="flex flex-wrap items-center gap-x-5 gap-y-1 text-neutral-600 font-mono text-[11px]">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[13px] text-neutral-400">sensors</span>
+            HW: Bosch BMI088 + Murata SCHA63T + iPhone 15 Pro (Secondary)
+          </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[13px] text-neutral-400">memory</span>
+            Model: IDR-Fusion-Net v4.2.1-quant
+          </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[13px] text-neutral-400">speed</span>
+            Sampling: 100 Hz IMU / 10 Hz GNSS
+          </span>
+</div>
+</div>
+<!-- Header Controls -->
+<div class="flex items-center gap-2 self-start xl:self-auto font-mono text-[11px]">
+<button class="h-8 px-3 bg-white hover:bg-neutral-100 text-black border border-neutral-300 flex items-center gap-1.5 transition-colors uppercase font-medium" type="button">
+<span class="material-symbols-outlined text-[14px]">file_download</span>
+<span>Export HDF5 / CSV</span>
+</button>
+<button class="h-8 px-3 bg-white hover:bg-neutral-100 text-black border border-neutral-300 flex items-center gap-1.5 transition-colors uppercase font-medium" type="button">
+<span class="material-symbols-outlined text-[14px]">replay</span>
+<span>Re-run Eval</span>
+</button>
+<button class="h-8 px-3.5 bg-black hover:bg-neutral-800 text-white flex items-center gap-1.5 transition-colors uppercase font-medium" type="button">
+<span class="material-symbols-outlined text-[14px]">splitscreen</span>
+<span>Inspect Slices</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Metric Overview Grid (6 Cards) -->
+<section class="w-full px-5 pt-4">
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
+<!-- Card 1 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>Pos Error (RMSE)</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">gps_fixed</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">1.42</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">m</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>Peak: 3.84m</span>
+<span class="text-black font-semibold border-b border-black">-84.2%</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>Drift Rate</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">navigation</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">0.68</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">%</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>Dist: 14.8 km</span>
+<span class="text-black font-medium">10.1 m tot</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>GNSS Outage</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">signal_disconnected</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">02:45</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">tot</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>3 events</span>
+<span class="text-neutral-900 font-semibold">Max 1:12</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>Inference Latency</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">memory</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">4.8</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">ms</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>P99: 7.2 ms</span>
+<span class="text-black font-semibold">ANE/TPU</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>Update Rate</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">sync</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">100</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">Hz</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>0 drops</span>
+<span class="text-black font-medium">&lt; 0.4ms jit</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="bg-white p-3 border border-neutral-200 flex flex-col justify-between">
+<div class="flex items-center justify-between text-neutral-500 font-mono text-[10px] uppercase tracking-wider">
+<span>Map-Match Conf</span>
+<span class="material-symbols-outlined text-[14px] text-neutral-800">polyline</span>
+</div>
+<div class="my-1 flex items-baseline">
+<span class="font-mono text-2xl font-bold text-black tracking-tight">96.4</span>
+<span class="font-mono text-[11px] text-neutral-500 ml-1">%</span>
+</div>
+<div class="flex items-center justify-between font-mono text-[10px] text-neutral-600">
+<span>OSM SD Network</span>
+<span class="text-black font-semibold">High Topo</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Multi-Pane Workbench -->
+<section class="w-full px-5 py-4 flex-1">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-3 items-start">
+<!-- Center Workbench (Left 9 cols / 75%) -->
+<div class="xl:col-span-9 flex flex-col gap-3">
+<!-- Large Interactive Route Trajectory Canvas -->
+<div class="bg-white border border-neutral-200 overflow-hidden flex flex-col">
+<!-- Canvas Top Toolbar -->
+<div class="h-9 px-3 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between font-mono">
+<div class="flex items-center gap-3">
+<span class="text-[11px] text-black font-semibold uppercase tracking-wider flex items-center gap-1.5">
+<span class="w-2 h-2 bg-black"></span>
+                MULTI-TRAJECTORY SPATIAL CANVAS
+              </span>
+<span class="text-[10px] text-neutral-500">
+                EPSG:4326 • SF Financial District Corridor
+              </span>
+</div>
+<!-- Viewport Actions -->
+<div class="flex items-center gap-1 text-[10px]">
+<button class="h-6 px-2 bg-white hover:bg-neutral-100 text-black border border-neutral-300 flex items-center gap-1 font-mono uppercase" id="btn-recenter" type="button">
+<span class="material-symbols-outlined text-[13px]">my_location</span>
+<span>Recenter</span>
+</button>
+<button class="h-6 px-2 bg-white hover:bg-neutral-100 text-black border border-neutral-300 flex items-center gap-1 font-mono uppercase" id="btn-split" type="button">
+<span class="material-symbols-outlined text-[13px]">view_column</span>
+<span>A/B Split</span>
+</button>
+<div class="flex items-center bg-white border border-neutral-300">
+<button class="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-black" type="button">
+<span class="material-symbols-outlined text-[13px]">add</span>
+</button>
+<span class="text-[10px] font-mono px-1 border-x border-neutral-200 text-black">18x</span>
+<button class="w-6 h-6 flex items-center justify-center text-neutral-600 hover:text-black" type="button">
+<span class="material-symbols-outlined text-[13px]">remove</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Vector Visualizer Map -->
+<div class="relative w-full h-[460px] bg-white overflow-hidden select-none border-b border-neutral-200">
+<!-- Technical Urban Grid Vectors (SVG) -->
+<svg class="w-full h-full" id="route-canvas" viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Uber Stark Grid Pattern -->
+<pattern height="40" id="urbanGrid" patternUnits="userSpaceOnUse" width="40">
+<path d="M 40 0 L 0 0 0 40" fill="none" stroke="#eeeeee" stroke-width="0.75"></path>
+</pattern>
+<!-- Stark Monochrome Error Hatching -->
+<pattern height="8" id="errorHatch" patternTransform="rotate(45)" patternUnits="userSpaceOnUse" width="8">
+<line stroke="#888888" stroke-width="1.5" x1="0" x2="0" y1="0" y2="8"></line>
+</pattern>
+</defs>
+<!-- Base Street Grid Background -->
+<rect fill="url(#urbanGrid)" height="100%" width="100%"></rect>
+<!-- Street Polygons (Monochrome Minimalist) -->
+<g class="city-geometry opacity-60">
+<!-- Montgomery St -->
+<line stroke="#e5e5e5" stroke-width="26" x1="280" x2="280" y1="0" y2="460"></line>
+<!-- Kearny St -->
+<line stroke="#e5e5e5" stroke-width="26" x1="450" x2="450" y1="0" y2="460"></line>
+<!-- Stockton St -->
+<line stroke="#e5e5e5" stroke-width="26" x1="620" x2="620" y1="0" y2="460"></line>
+<!-- Tunnel section overlay -->
+<rect fill="#cccccc" height="150" width="26" x="607" y="160"></rect>
+<!-- Cross Streets -->
+<!-- Bush St -->
+<line stroke="#e5e5e5" stroke-width="20" x1="0" x2="960" y1="90" y2="90"></line>
+<!-- Sutter St -->
+<line stroke="#e5e5e5" stroke-width="22" x1="0" x2="960" y1="210" y2="210"></line>
+<!-- Post St -->
+<line stroke="#e5e5e5" stroke-width="22" x1="0" x2="960" y1="330" y2="330"></line>
+<!-- Street Names (Sober monospace) -->
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="290" y="25">MONTGOMERY ST</text>
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="460" y="25">KEARNY ST</text>
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="630" y="25">STOCKTON TUNNEL (UNDERPASS)</text>
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="30" y="82">BUSH ST</text>
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="30" y="202">SUTTER ST</text>
+<text class="font-mono text-[9px] tracking-wider" fill="#777777" x="30" y="322">POST ST</text>
+</g>
+<!-- High Error Zones (Monochrome stark hatching) -->
+<g id="layer-error-zones">
+<!-- Zone 1: Montgomery & Sutter Canyon -->
+<circle cx="280" cy="210" fill="url(#errorHatch)" opacity="0.4" r="48"></circle>
+<circle cx="280" cy="210" fill="none" r="48" stroke="#111111" stroke-dasharray="3,3" stroke-width="1"></circle>
+<!-- Zone 2: Stockton Tunnel Blackout zone -->
+<ellipse cx="620" cy="235" fill="url(#errorHatch)" opacity="0.4" rx="55" ry="85"></ellipse>
+<ellipse cx="620" cy="235" fill="none" rx="55" ry="85" stroke="#111111" stroke-dasharray="4,3" stroke-width="1"></ellipse>
+</g>
+<!-- Trajectory 1: Ground Truth (Solid light gray baseline #AAAAAA) -->
+<g id="layer-ground-truth">
+<path d="M 120,90 L 280,90 L 280,210 L 450,210 L 450,330 L 620,330 L 620,130 L 840,130" fill="none" stroke="#aaaaaa" stroke-linecap="square" stroke-linejoin="miter" stroke-width="2.5"></path>
+</g>
+<!-- Trajectory 2: Raw Inertial Path (Dashed dark charcoal, severe drift) -->
+<g id="layer-raw-imu">
+<path d="M 120,90 Q 210,91 280,93 Q 284,140 274,180 Q 268,206 310,214 Q 380,218 445,212 Q 455,270 440,315 Q 436,334 500,336 C 580,338 575,270 560,205 C 550,150 565,115 690,105 Q 780,100 840,110" fill="none" stroke="#555555" stroke-dasharray="4,3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
+</g>
+<!-- Trajectory 3: AI-Corrected Path (Stark bold solid black #000000) -->
+<g id="layer-ai-corrected">
+<path d="M 120,90 L 278,90.5 Q 282,150 279.5,208.5 Q 360,209.5 449.5,210 Q 450.5,270 449.5,329 Q 530,330 618.5,330.5 Q 617.5,230 619,131 L 840,130.5" fill="none" stroke="#000000" stroke-linecap="square" stroke-linejoin="miter" stroke-width="2.8"></path>
+</g>
+<!-- Trajectory 4: Map-Matched Path (Thin crisp charcoal #333333) -->
+<g id="layer-map-matched">
+<path d="M 120,90 L 280,90 L 280,210 L 450,210 L 450,330 L 620,330 L 620,130 L 840,130" fill="none" stroke="#222222" stroke-dasharray="2,2" stroke-linecap="square" stroke-linejoin="miter" stroke-width="1.2"></path>
+</g>
+<!-- Current Vehicle Position (T+07:45 Scrubber Playhead Point) -->
+<g id="vehicle-cursor" transform="translate(620, 235)">
+<circle fill="#000000" fill-opacity="0.1" r="14"></circle>
+<circle fill="#000000" r="5"></circle>
+<circle fill="#ffffff" r="2"></circle>
+<!-- Heading Arrow -->
+<polygon fill="#000000" points="0,-12 3.5,-6 -3.5,-6"></polygon>
+</g>
+<!-- Spatial Landmark Annotations / Badges (Monochrome technical) -->
+<!-- Outage 1 Marker -->
+<g transform="translate(280, 210)">
+<rect fill="#000000" height="4" width="4" x="-2" y="-2"></rect>
+<line stroke="#000000" stroke-width="1" x1="0" x2="25" y1="0" y2="-28"></line>
+<rect fill="#ffffff" height="20" stroke="#000000" stroke-width="1" width="138" x="25" y="-38"></rect>
+<text class="font-mono text-[9px] font-medium" fill="#000000" x="30" y="-25">URBAN CANYON [00:03:15]</text>
+</g>
+<!-- Outage 2 Marker (Tunnel Entrance) -->
+<g transform="translate(620, 310)">
+<rect fill="#000000" height="4" width="4" x="-2" y="-2"></rect>
+<line stroke="#000000" stroke-width="1" x1="0" x2="30" y1="0" y2="24"></line>
+<rect fill="#000000" height="20" stroke="#000000" stroke-width="1" width="148" x="30" y="14"></rect>
+<text class="font-mono text-[9px] font-semibold" fill="#ffffff" x="35" y="27">GNSS CUTOFF [00:07:20]</text>
+</g>
+<!-- Convergence Marker -->
+<g transform="translate(620, 150)">
+<rect fill="#000000" height="4" width="4" x="-2" y="-2"></rect>
+<line stroke="#000000" stroke-width="1" x1="0" x2="30" y1="0" y2="-18"></line>
+<rect fill="#ffffff" height="20" stroke="#000000" stroke-width="1" width="150" x="30" y="-28"></rect>
+<text class="font-mono text-[9px] font-medium" fill="#000000" x="35" y="-15">CONVERGENCE [00:08:34]</text>
+</g>
+</svg>
+<!-- Floating Live Cursor Metric Tag -->
+<div class="absolute top-3 left-3 bg-black text-white px-3 py-1.5 border border-neutral-800 flex items-center gap-3 font-mono text-[10px]">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 bg-white animate-pulse"></span>
+<span class="font-semibold tracking-wide">STOCKTON TUNNEL [IN-PROGRESS]</span>
+</div>
+<span class="text-neutral-400">37.7914°N, 122.4069°W</span>
+<span class="text-neutral-400">ALT: 24.3M</span>
+<span class="text-white font-bold bg-neutral-800 px-1">RTK LOST</span>
+</div>
+<!-- Trajectory Interactive Legend -->
+<div class="absolute bottom-3 left-3 right-3 sm:right-auto bg-white/95 backdrop-blur-none p-2 border border-neutral-300 flex flex-wrap items-center gap-3 font-mono text-[10px]">
+<label class="flex items-center gap-1.5 cursor-pointer select-none">
+<input checked="" class="rounded-none border-neutral-400 text-black focus:ring-0" id="chk-gt" type="checkbox">
+<span class="w-3.5 h-0.5 bg-neutral-400"></span>
+<span class="text-neutral-700">Ground Truth (RTK)</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer select-none">
+<input checked="" class="rounded-none border-neutral-400 text-black focus:ring-0" id="chk-raw" type="checkbox">
+<span class="w-3.5 h-0.5 bg-neutral-600 border-b border-dashed border-neutral-900"></span>
+<span class="text-neutral-700">Raw IMU</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer select-none">
+<input checked="" class="rounded-none border-neutral-400 text-black focus:ring-0" id="chk-ai" type="checkbox">
+<span class="w-3.5 h-1 bg-black"></span>
+<span class="text-black font-bold">AI-Corrected</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer select-none">
+<input checked="" class="rounded-none border-neutral-400 text-black focus:ring-0" id="chk-mm" type="checkbox">
+<span class="w-3.5 h-0.5 bg-neutral-800"></span>
+<span class="text-neutral-700">Map-Matched</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer select-none">
+<input checked="" class="rounded-none border-neutral-400 text-black focus:ring-0" id="chk-err" type="checkbox">
+<span class="w-2.5 h-2.5 bg-neutral-300 border border-black"></span>
+<span class="text-neutral-700">Error Zones (&gt;2.5m)</span>
+</label>
+</div>
+</div>
+</div>
+<!-- 15-Minute Timeline Scrubber for Blackout Intervals -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col gap-2 font-mono">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Drive Mission Timeline</span>
+<span class="text-[10px] text-neutral-500">[00:00:00 - 00:15:32]</span>
+</div>
+<!-- Playhead Instant Readout -->
+<div class="flex items-center gap-3 text-[10px] px-2 py-0.5 bg-neutral-100 border border-neutral-200">
+<span class="font-bold text-black">T+07:45</span>
+<span class="text-neutral-600">IMU Drift: <strong class="text-black">4.2m</strong></span>
+<span class="text-neutral-600">AI Error: <strong class="text-black">1.1m</strong></span>
+<span class="text-neutral-600">GNSS Sats: <strong class="text-black">0</strong></span>
+</div>
+</div>
+<!-- The Scrubber Track -->
+<div class="relative w-full h-8 bg-neutral-100 border border-neutral-300 overflow-hidden select-none cursor-pointer flex items-center px-1">
+<!-- Base GNSS Bar -->
+<div class="absolute inset-x-0 h-3 bg-neutral-200 top-2.5"></div>
+<!-- Outage 1 -->
+<div class="absolute h-3 top-2.5 bg-neutral-400" style="left: 20.9%; width: 4.8%;" title="Outage 1: Montgomery Canyon (45s)">
+<span class="absolute -top-3 left-0 text-[8px] text-neutral-700 uppercase font-mono">Outage 1</span>
+</div>
+<!-- Outage 2 (Stockton Tunnel) -->
+<div class="absolute h-3 top-2.5 bg-black" style="left: 47.2%; width: 7.7%;" title="Outage 2: Stockton Tunnel (72s)">
+<span class="absolute -top-3 left-0 text-[8px] text-black font-bold uppercase font-mono">Tunnel</span>
+</div>
+<!-- Outage 3 -->
+<div class="absolute h-3 top-2.5 bg-neutral-400" style="left: 71.4%; width: 5.1%;" title="Outage 3: Market St (48s)">
+<span class="absolute -top-3 left-0 text-[8px] text-neutral-700 uppercase font-mono">Outage 3</span>
+</div>
+<!-- Scrubber Playhead -->
+<div class="absolute top-0 bottom-0 w-[2px] bg-black z-20" style="left: 49.9%;">
+<div class="w-2.5 h-2.5 bg-black -ml-[4px] -mt-[1px]"></div>
+</div>
+<!-- Time Ticks -->
+<div class="absolute bottom-0 inset-x-0 flex justify-between px-2 text-[8px] text-neutral-500 pointer-events-none">
+<span>00:00</span>
+<span>03:00</span>
+<span>06:00</span>
+<span class="font-bold text-black">07:45</span>
+<span>09:00</span>
+<span>12:00</span>
+<span>15:32</span>
+</div>
+</div>
+<!-- Playback Controls Bar -->
+<div class="flex items-center justify-between pt-1 text-[11px]">
+<div class="flex items-center gap-1">
+<button class="w-7 h-7 flex items-center justify-center bg-white border border-neutral-300 hover:bg-neutral-100 text-black transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">skip_previous</span>
+</button>
+<button class="w-8 h-7 bg-black hover:bg-neutral-800 text-white flex items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center bg-white border border-neutral-300 hover:bg-neutral-100 text-black transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">skip_next</span>
+</button>
+<div class="h-4 w-px bg-neutral-300 mx-1"></div>
+<!-- Speed Selector -->
+<div class="flex items-center border border-neutral-300 bg-white text-[10px]">
+<button class="px-2 py-0.5 text-neutral-600 hover:text-black" type="button">0.5x</button>
+<button class="px-2 py-0.5 bg-black text-white font-bold" type="button">1x</button>
+<button class="px-2 py-0.5 text-neutral-600 hover:text-black" type="button">2x</button>
+<button class="px-2 py-0.5 text-neutral-600 hover:text-black" type="button">5x</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-[10px]">
+<button class="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-black flex items-center gap-1 uppercase" type="button">
+<span class="material-symbols-outlined text-[13px]">fast_forward</span>
+<span>Next Outage</span>
+</button>
+<button class="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-black flex items-center gap-1 uppercase" type="button">
+<span class="material-symbols-outlined text-[13px]">repeat</span>
+<span>Loop Tunnel</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Technical Diagnostic Graphs (Side-by-Side Dual Visualizers) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono">
+<!-- Graph 1: Cross-Track & Along-Track Error over Time -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Cross &amp; Along Error (m)</span>
+<div class="flex items-center gap-3 text-[9px] text-neutral-600 uppercase">
+<span class="flex items-center gap-1"><span class="w-3 h-[2px] bg-black"></span> Cross</span>
+<span class="flex items-center gap-1"><span class="w-3 h-[2px] bg-neutral-400"></span> Along</span>
+<span class="flex items-center gap-1"><span class="w-3 h-[1px] bg-neutral-700 border-b border-dashed border-black"></span> Raw IMU</span>
+</div>
+</div>
+<!-- High density SVG Chart -->
+<div class="h-44 w-full pt-1">
+<svg class="w-full h-full" viewBox="0 0 450 160" xmlns="http://www.w3.org/2000/svg">
+<!-- Grid Lines -->
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="20" y2="20"></line>
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="55" y2="55"></line>
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="90" y2="90"></line>
+<line stroke="#cccccc" stroke-width="1" x1="30" x2="440" y1="125" y2="125"></line> <!-- Ground truth zero -->
+<!-- Y-Axis Labels -->
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="24">4.0m</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="59">2.5m</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="94">1.0m</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="129">0.0m</text>
+<!-- Outage Highlight Zones (Grayscale blocks) -->
+<rect fill="#f0f0f0" height="110" width="30" x="110" y="15"></rect>
+<rect fill="#e0e0e0" height="110" width="45" x="220" y="15"></rect>
+<rect fill="#f0f0f0" height="110" width="30" x="330" y="15"></rect>
+<!-- Raw IMU Divergent Curve -->
+<path d="M 30,123 Q 80,122 110,116 Q 125,75 140,84 Q 180,95 220,90 Q 240,25 265,30 Q 300,50 330,85 Q 345,60 360,70 Q 400,98 440,110" fill="none" stroke="#777777" stroke-dasharray="3,2" stroke-width="1.2"></path>
+<!-- Cross-track AI Error Curve -->
+<path d="M 30,124 Q 70,124 110,121 Q 125,102 140,118 Q 180,123 220,120 Q 242,88 265,116 Q 300,123 330,121 Q 345,108 360,119 Q 400,124 440,124" fill="none" stroke="#000000" stroke-width="2"></path>
+<!-- Along-track AI Error Curve -->
+<path d="M 30,125 Q 70,125 110,123 Q 125,114 140,122 Q 180,124 220,123 Q 242,98 265,120 Q 300,124 330,122 Q 345,112 360,121 Q 400,124 440,125" fill="none" stroke="#aaaaaa" stroke-width="1.5"></path>
+<!-- Current Scrubber Line Indicator -->
+<line stroke="#000000" stroke-width="1" x1="235" x2="235" y1="10" y2="135"></line>
+<rect fill="#000000" height="5" width="5" x="232.5" y="91.5"></rect>
+<text class="font-mono text-[9px] font-bold" fill="#000000" x="242" y="86">1.12m</text>
+<!-- X-Axis Labels -->
+<text class="font-mono text-[9px]" fill="#888888" x="30" y="145">00:00</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="125" y="145">03:40</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="242" y="145">07:45</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="345" y="145">11:30</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="440" y="145">15:32</text>
+</svg>
+</div>
+<div class="mt-1 pt-1.5 border-t border-neutral-200 flex justify-between text-[10px] text-neutral-600">
+<span>REF: RTK Dual-antenna</span>
+<span>MAX DEV: <strong class="text-black">3.84m (Raw: 18.2m)</strong></span>
+</div>
+</div>
+<!-- Graph 2: Inference Latency & Jitter Histogram -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col">
+<div class="flex items-center justify-between mb-1">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Latency Distribution (ms)</span>
+<div class="flex items-center gap-2 text-[10px]">
+<span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 text-black font-semibold">Mean 4.82ms</span>
+<span class="px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 text-black font-semibold">P99 7.20ms</span>
+</div>
+</div>
+<!-- Histogram Bar Chart -->
+<div class="h-44 w-full pt-1">
+<svg class="w-full h-full" viewBox="0 0 450 160" xmlns="http://www.w3.org/2000/svg">
+<!-- Grid Lines -->
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="20" y2="20"></line>
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="60" y2="60"></line>
+<line stroke="#eeeeee" stroke-dasharray="2,2" x1="30" x2="440" y1="100" y2="100"></line>
+<line stroke="#cccccc" stroke-width="1" x1="30" x2="440" y1="130" y2="130"></line>
+<!-- Y-Axis Counts -->
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="24">40k</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="64">25k</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="end" x="24" y="104">10k</text>
+<!-- Histogram Bars (Monochrome Grayscale) -->
+<rect fill="#cccccc" height="5" width="18" x="45" y="125"></rect>
+<rect fill="#cccccc" height="12" width="18" x="70" y="118"></rect>
+<rect fill="#888888" height="28" width="18" x="95" y="102"></rect>
+<!-- 4.0 - 5.0ms (Peak cluster) -->
+<rect fill="#666666" height="62" width="18" x="120" y="68"></rect>
+<rect fill="#222222" height="98" width="18" x="145" y="32"></rect>
+<rect fill="#000000" height="108" width="18" x="170" y="22"></rect>
+<rect fill="#222222" height="85" width="18" x="195" y="45"></rect>
+<!-- 5.5 - 7.0ms -->
+<rect fill="#666666" height="50" width="18" x="220" y="80"></rect>
+<rect fill="#888888" height="32" width="18" x="245" y="98"></rect>
+<rect fill="#cccccc" height="18" width="18" x="270" y="112"></rect>
+<rect fill="#cccccc" height="10" width="18" x="295" y="120"></rect>
+<!-- Tail / Outliers -->
+<rect fill="#444444" height="7" width="18" x="320" y="123"></rect>
+<rect fill="#444444" height="4" width="18" x="345" y="126"></rect>
+<rect fill="#000000" height="2" width="18" x="370" y="128"></rect>
+<!-- P99 Indicator Line -->
+<line stroke="#000000" stroke-dasharray="2,2" stroke-width="1" x1="330" x2="330" y1="15" y2="130"></line>
+<text class="font-mono text-[9px] font-bold" fill="#000000" x="333" y="28">P99 = 7.2ms</text>
+<!-- SLA 10ms Limit Line -->
+<line stroke="#888888" stroke-width="1.2" x1="410" x2="410" y1="15" y2="130"></line>
+<text class="font-mono text-[9px] font-semibold" fill="#555555" text-anchor="end" x="408" y="28">10ms Limit</text>
+<!-- X-Axis Labels -->
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="54" y="145">2.5</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="179" y="145">4.8 (Mode)</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="254" y="145">6.0</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="330" y="145">7.2</text>
+<text class="font-mono text-[9px]" fill="#888888" text-anchor="middle" x="410" y="145">10.0 ms</text>
+</svg>
+</div>
+<div class="mt-1 pt-1.5 border-t border-neutral-200 flex justify-between text-[10px] text-neutral-600">
+<span>Core: ANE 16-Core Int8</span>
+<span>Tail (&gt;10ms): <strong class="text-black">0 (0.00%)</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Inspection Sidebar (Right 3 cols / 25%) -->
+<aside class="xl:col-span-3 flex flex-col gap-3 font-mono">
+<!-- Outage Performance Breakdown -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between pb-1.5 border-b border-neutral-200">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Outage Breakdown</span>
+<span class="text-[10px] text-neutral-500">3 EVENTS</span>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Event 1 -->
+<div class="p-2 bg-neutral-50 border border-neutral-200 flex flex-col gap-1">
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-bold text-black">1. MONTGOMERY ST</span>
+<span class="text-neutral-500">45s duration</span>
+</div>
+<div class="flex items-center justify-between text-neutral-600 text-[10px]">
+<span>Mean: <strong class="text-black">0.92 m</strong></span>
+<span>Rec: <strong class="text-black">1.2 s</strong></span>
+</div>
+<div class="w-full bg-neutral-200 h-1 overflow-hidden">
+<div class="bg-black h-full" style="width: 32%;"></div>
+</div>
+</div>
+<!-- Event 2 (Tunnel) -->
+<div class="p-2 bg-neutral-50 border border-neutral-200 flex flex-col gap-1">
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-bold text-black">2. STOCKTON TUNNEL</span>
+<span class="text-black font-semibold bg-neutral-200 px-1">72s blackout</span>
+</div>
+<div class="flex items-center justify-between text-neutral-600 text-[10px]">
+<span>Mean: <strong class="text-black">1.84 m</strong></span>
+<span>Rec: <strong class="text-black">2.4 s</strong></span>
+</div>
+<div class="w-full bg-neutral-200 h-1 overflow-hidden">
+<div class="bg-black h-full" style="width: 78%;"></div>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="p-2 bg-neutral-50 border border-neutral-200 flex flex-col gap-1">
+<div class="flex items-center justify-between text-[11px]">
+<span class="font-bold text-black">3. MARKET ST UNDERPASS</span>
+<span class="text-neutral-500">48s duration</span>
+</div>
+<div class="flex items-center justify-between text-neutral-600 text-[10px]">
+<span>Mean: <strong class="text-black">1.15 m</strong></span>
+<span>Rec: <strong class="text-black">0.8 s</strong></span>
+</div>
+<div class="w-full bg-neutral-200 h-1 overflow-hidden">
+<div class="bg-neutral-600 h-full" style="width: 44%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sensor Health & Calibration Metrics -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between pb-1.5 border-b border-neutral-200">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Sensor Calibration</span>
+<span class="text-[9px] px-1.5 py-0.5 bg-black text-white font-semibold uppercase">Nominal</span>
+</div>
+<div class="flex flex-col divide-y divide-neutral-100 text-black text-[11px]">
+<div class="flex items-center justify-between py-1.5">
+<span class="text-neutral-600">Accel Bias Stability</span>
+<span class="font-bold">12 µg</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-neutral-600">Gyro In-Run Bias</span>
+<span class="font-bold">0.04 °/s</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-neutral-600">Wheel Tick Scale</span>
+<span class="font-bold">0.9984 (Fused)</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-neutral-600">Magnetometer</span>
+<span class="font-medium text-neutral-700">Compensated</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-neutral-600">Cross-Axis Coupling</span>
+<span class="font-bold">&lt; 0.05%</span>
+</div>
+</div>
+</div>
+<!-- Failure & Recovery Diagnostics -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between pb-1.5 border-b border-neutral-200">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider">Recovery Checks</span>
+<span class="material-symbols-outlined text-[15px] text-black">verified</span>
+</div>
+<div class="flex flex-col gap-1.5 text-black text-[11px]">
+<div class="p-1.5 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+<span class="text-neutral-600">Avg Restabilize</span>
+<span class="font-bold">1.4 s post-GNSS</span>
+</div>
+<div class="p-1.5 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+<span class="text-neutral-600">Zero Velocity (ZUPT)</span>
+<span class="font-bold">14 instances</span>
+</div>
+<div class="p-1.5 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+<span class="text-neutral-600">Non-Holonomic</span>
+<span class="font-bold">Active</span>
+</div>
+<div class="p-1.5 bg-neutral-50 border border-neutral-200 flex items-center justify-between">
+<span class="text-neutral-600">Kalman Innovation</span>
+<span class="font-bold">&lt; 1.8σ (Bounded)</span>
+</div>
+</div>
+</div>
+<!-- Secondary Diagnostics Quick Actions -->
+<div class="bg-white border border-neutral-200 p-3 flex flex-col gap-1.5">
+<span class="text-[11px] uppercase font-bold text-black tracking-wider mb-0.5">Audit Operations</span>
+<button class="w-full h-8 px-3 bg-white hover:bg-neutral-100 text-black border border-neutral-300 text-[11px] flex items-center justify-between transition-colors uppercase font-medium" type="button">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-neutral-600">archive</span>
+<span>Diagnostic Bundle</span>
+</span>
+<span class="text-[10px] text-neutral-500">24.8 MB</span>
+</button>
+<button class="w-full h-8 px-3 bg-white hover:bg-neutral-100 text-black border border-neutral-300 text-[11px] flex items-center justify-between transition-colors uppercase font-medium" type="button">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-neutral-600">picture_as_pdf</span>
+<span>Summary Report</span>
+</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<button class="w-full h-8 px-3 bg-black hover:bg-neutral-800 text-white text-[11px] flex items-center justify-between transition-colors uppercase font-medium" type="button">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-white">compare_arrows</span>
+<span>Diff with v4.1</span>
+</span>
+<span class="text-[10px] font-bold text-white">+18.4%</span>
+</button>
+</div>
+</aside>
+</div>
+</section>
+</div>
+<script>
+  // Trajectory Layer Toggles micro-interaction
+  document.addEventListener('DOMContentLoaded', () => {
+    const bindToggle = (chkId, layerId) => {
+      const chk = document.getElementById(chkId);
+      const layer = document.getElementById(layerId);
+      if (chk && layer) {
+        chk.addEventListener('change', () => {
+          layer.style.display = chk.checked ? 'inline' : 'none';
+        });
+      }
+    };
+
+    bindToggle('chk-gt', 'layer-ground-truth');
+    bindToggle('chk-raw', 'layer-raw-imu');
+    bindToggle('chk-ai', 'layer-ai-corrected');
+    bindToggle('chk-mm', 'layer-map-matched');
+    bindToggle('chk-err', 'layer-error-zones');
+
+    // Recenter map micro-animation
+    const btnRecenter = document.getElementById('btn-recenter');
+    const svg = document.getElementById('route-canvas');
+    if (btnRecenter && svg) {
+      btnRecenter.addEventListener('click', () => {
+        svg.style.transition = 'transform 0.2s ease';
+        svg.style.transform = 'scale(0.99)';
+        setTimeout(() => {
+          svg.style.transform = 'scale(1)';
+        }, 200);
+      });
+    }
+  });
+</script></main><footer class="w-full bg-white border-t border-neutral-200 py-3 font-mono"><div class="w-full px-5 flex items-center justify-between text-neutral-500 text-[10px] uppercase"><span>VOYAGER Edge Telemetry &amp; Spatial Systems</span><span>Autonomous Route Validation Protocol © 2025</span></div></footer></body></html>

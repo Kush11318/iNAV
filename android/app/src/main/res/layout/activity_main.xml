@@ -2,13 +2,13 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_root"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark">
+    android:background="#08090B">
 
-    <!-- 1. FULL-SCREEN IMMERSIVE MAP (Google Maps Paradigm) -->
-    <org.osmdroid.views.MapView
+    <!-- 1. FULL-SCREEN VECTOR / SATELLITE MAP -->
+    <org.maplibre.android.maps.MapView
         android:id="@+id/map_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -17,957 +17,1800 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 2. FLOATING TOP NAVIGATION & ROUTE CARD (Unified Glass Card) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_top_nav"
+    <!-- 2. TOP INTERFACE AREA (HUD & MANEUVER CARD) -->
+    <LinearLayout
+        android:id="@+id/top_interface_area"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="12dp"
-        app:cardBackgroundColor="#F2161A22"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="10dp"
-        app:strokeColor="#2E3342"
-        app:strokeWidth="1dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:orientation="vertical"
+        android:paddingTop="32dp"
+        android:paddingHorizontal="14dp"
+        android:elevation="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Weather Pill (Top Left Apple Maps Indicator) -->
         <LinearLayout
+            android:id="@+id/pill_weather"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_weather_pill"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:elevation="4dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_weather_cloud" />
+
+            <TextView
+                android:id="@+id/tv_weather_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="28°C"
+                android:textColor="#FF1F2937"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-bold" />
+        </LinearLayout>
+
+        <!-- Primary Maneuver Header Card (Pitch Black with Stark White Typography) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_top_nav"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:visibility="gone"
+            app:cardBackgroundColor="#F2000000"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="8dp"
+            app:strokeColor="#E6272A30"
+            app:strokeWidth="1dp">
 
-            <!-- Primary Navigation Status Header -->
             <LinearLayout
-                android:id="@+id/gmaps_nav_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="#1B5E20"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="10dp">
-
-                <TextView
-                    android:id="@+id/tv_top_road_icon"
-                    android:layout_width="38dp"
-                    android:layout_height="38dp"
-                    android:background="#2E7D32"
-                    android:gravity="center"
-                    android:text="📍"
-                    android:textColor="@color/white"
-                    android:textSize="20sp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tv_top_road_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Residential"
-                        android:textColor="@color/white"
-                        android:textSize="17sp"
-                        android:textStyle="bold"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-
-                    <TextView
-                        android:id="@+id/tv_top_sub_status"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Continuous 15-State ES-EKF Fusion · 10 Hz"
-                        android:textColor="#C8E6C9"
-                        android:textSize="11sp"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-                </LinearLayout>
-
-                <!-- Navigation Mode Badge (Clean, High Contrast) -->
-                <TextView
-                    android:id="@+id/tv_mode_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="#1B5E20"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="5dp"
-                    android:text="AIDED (GNSS)"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Destination Selector, Search Bar & Active Route Controls -->
-            <LinearLayout
-                android:id="@+id/card_route_selector"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp">
+                android:padding="12dp">
 
-                <!-- 1. Search Bar & Suggestions Picker (When Route Inactive) -->
+                <!-- Top Overhead Lane Guidance Row (Stark arrows: ↖  ↖    ↑    ↑) -->
                 <LinearLayout
-                    android:id="@+id/panel_route_picker"
+                    android:id="@+id/container_top_card_lanes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone" />
+
+                <!-- Main Maneuver Row -->
+                <LinearLayout
+                    android:id="@+id/gmaps_nav_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <!-- Maneuver Direction Symbol (Dark Charcoal Tile with White Arrow) -->
+                    <FrameLayout
+                        android:id="@+id/fl_top_road_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_maneuver_tile"
+                        android:backgroundTint="#FF17191D">
+
+                        <TextView
+                            android:id="@+id/tv_top_road_icon"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:text="↑"
+                            android:textColor="#FFFFFFFF"
+                            android:textSize="26sp"
+                            android:fontFamily="sans-serif-bold" />
+                    </FrameLayout>
+
+                    <!-- Street Instruction Text & Badges -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <!-- Distance & Exit Badge Row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_top_distance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="500 FT"
+                                android:textColor="#FFD4D4D8"
+                                android:textSize="12.5sp"
+                                android:fontFamily="sans-serif-bold" />
+
+                            <View
+                                android:layout_width="0dp"
+                                android:layout_height="1dp"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:id="@+id/tv_top_exit_badge"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_exit_badge"
+                                android:text="Exit 67-B"
+                                android:textColor="#FFFFFFFF"
+                                android:textSize="10sp"
+                                android:fontFamily="monospace"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
+                        <!-- Primary Road Name with optional Highway Shield -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="1dp">
+
+                            <TextView
+                                android:id="@+id/tv_top_shield_badge"
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:layout_marginEnd="6dp"
+                                android:background="@drawable/bg_interstate_shield"
+                                android:gravity="center"
+                                android:text="44"
+                                android:textColor="#FFFFFFFF"
+                                android:textSize="10sp"
+                                android:fontFamily="monospace"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <TextView
+                                android:id="@+id/tv_top_road_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="W 47th St"
+                                android:textColor="#FFFFFFFF"
+                                android:textSize="19sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false"
+                                android:maxLines="1"
+                                android:ellipsize="end" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/container_top_sub_direction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tv_top_toward_prefix"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="toward "
+                                android:textColor="#FFA1A1AA"
+                                android:textSize="11.5sp" />
+
+                            <TextView
+                                android:id="@+id/tv_top_sub_direction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Broadway"
+                                android:textColor="#FFE4E4E7"
+                                android:textSize="11.5sp"
+                                android:fontFamily="sans-serif-bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Circular Action / Assistant Button -->
+                    <FrameLayout
+                        android:id="@+id/btn_nav_expand_chevron"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_circular_button"
+                        android:backgroundTint="#FF17191D"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_mic_assistant"
+                            app:tint="#FFFFFFFF" />
+                    </FrameLayout>
+                </LinearLayout>
+
+                <!-- Next Maneuver Micro Sub-Bar -->
+                <LinearLayout
+                    android:id="@+id/container_then_maneuver"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingTop="6dp"
+                    android:gravity="center_vertical"
                     android:orientation="vertical">
 
-                    <!-- Explicit Start & Destination Overview (Google Maps Navigation Style) -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.75dp"
+                        android:background="#E6272A30"
+                        android:layout_marginBottom="6dp" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:background="#151A24"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="5dp"
-                        android:layout_marginBottom="5dp">
-
-                        <!-- Origin / Start Point Row -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🟢"
-                                android:textSize="10sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text="START:"
-                                android:textColor="#34D399"
-                                android:textSize="10sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tv_picker_start_label"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_weight="1"
-                                android:text="Your Current Location (Dead Reckoning)"
-                                android:textColor="#E2E8F0"
-                                android:textSize="10sp"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
-
-                        <!-- Dotted Connector -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="3dp"
-                            android:text="⫶"
-                            android:textColor="#64748B"
-                            android:textSize="9sp" />
-
-                        <!-- Destination / End Point Target Row -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🔴"
-                                android:textSize="10sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="6dp"
-                                android:text="END:"
-                                android:textColor="#F87171"
-                                android:textSize="10sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="4dp"
-                                android:layout_weight="1"
-                                android:text="Search destination or tap on map"
-                                android:textColor="#94A3B8"
-                                android:textSize="10sp"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Interactive Google Maps Search Input -->
-                    <LinearLayout
-                        android:id="@+id/container_search_bar"
-                        android:layout_width="match_parent"
-                        android:layout_height="38dp"
-                        android:background="#1F2430"
-                        android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:paddingHorizontal="10dp">
+                        android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/btn_search_icon"
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:gravity="center"
-                            android:text="🔍"
-                            android:textSize="13sp"
-                            android:clickable="true"
-                            android:focusable="true" />
-
-                        <EditText
-                            android:id="@+id/et_search_destination"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:layout_marginStart="6dp"
-                            android:background="@null"
-                            android:hint="Search destination or enter lat, lon..."
-                            android:textColorHint="#64748B"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:imeOptions="actionSearch"
-                            android:inputType="text"
-                            android:singleLine="true" />
-
-                        <TextView
-                            android:id="@+id/btn_clear_search"
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:gravity="center"
-                            android:text="✕"
-                            android:textColor="#94A3B8"
-                            android:textSize="12sp"
-                            android:visibility="gone"
-                            android:clickable="true"
-                            android:focusable="true" />
-                    </LinearLayout>
-
-                    <!-- Explicit 1-Tap Map Layer Switcher (OSM vs Satellite) & Fetch GPS -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="34dp"
-                        android:layout_marginTop="6dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <!-- Segmented Switcher: [ 🗺️ OSM Street ] [ 🛰️ Satellite ] -->
-                        <LinearLayout
-                            android:id="@+id/container_layer_segmented"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="#151A24"
-                            android:orientation="horizontal"
-                            android:padding="2dp">
-
-                            <TextView
-                                android:id="@+id/btn_osm_view"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:gravity="center"
-                                android:text="🗺️ OSM Street"
-                                android:textColor="@color/white"
-                                android:textSize="11sp"
-                                android:textStyle="bold"
-                                android:background="#1E40AF"
-                                android:clickable="true"
-                                android:focusable="true" />
-
-                            <TextView
-                                android:id="@+id/btn_sat_view"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:gravity="center"
-                                android:text="🛰️ Satellite"
-                                android:textColor="#94A3B8"
-                                android:textSize="11sp"
-                                android:textStyle="bold"
-                                android:clickable="true"
-                                android:focusable="true" />
-                        </LinearLayout>
-
-                        <!-- Explicit Fetch GPS Button -->
-                        <TextView
-                            android:id="@+id/btn_fetch_gps_now"
+                            android:id="@+id/tv_then_prefix"
                             android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="6dp"
-                            android:background="#065F46"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:paddingHorizontal="10dp"
-                            android:text="📍 Fetch GPS"
-                            android:textColor="@color/white"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            android:layout_height="wrap_content"
+                            android:text="THEN › "
+                            android:textColor="#FF71717A"
+                            android:textSize="9.5sp"
+                            android:fontFamily="monospace" />
 
-                    <!-- Dynamic Place Suggestions Container (shown when searching) -->
-                    <LinearLayout
-                        android:id="@+id/container_search_suggestions"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginTop="4dp">
-                        <!-- Populated dynamically with search matches -->
+                        <TextView
+                            android:id="@+id/tv_then_icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="↱"
+                            android:textColor="#FFFFFFFF"
+                            android:textSize="11.5sp"
+                            android:layout_marginEnd="4dp"
+                            android:visibility="gone" />
+
+                        <TextView
+                            android:id="@+id/tv_then_instruction"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Turn right onto Broadway"
+                            android:textColor="#FFD4D4D8"
+                            android:textSize="11sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:maxLines="1"
+                            android:ellipsize="end" />
+
+                        <TextView
+                            android:id="@+id/tv_then_distance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="500 FT"
+                            android:textColor="#FFE4E4E7"
+                            android:textSize="10.5sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- 2. Active Route: START POINT & END POINT Visual Header -->
+                <!-- Top Card Grab Handle / Indicator Pill -->
+                <View
+                    android:id="@+id/pill_top_card_handle"
+                    android:layout_width="36dp"
+                    android:layout_height="3.5dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_grab_handle"
+                    android:backgroundTint="#FF272A30" />
+
+                <!-- Embedded Destination Search / Route Selector Section (Collapsible) -->
                 <LinearLayout
-                    android:id="@+id/panel_active_route"
+                    android:id="@+id/card_route_selector"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:visibility="gone"
+                    android:layout_marginTop="10dp"
                     tools:visibility="visible">
 
-                    <!-- START POINT Row -->
                     <LinearLayout
+                        android:id="@+id/panel_route_picker"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:orientation="vertical">
 
                         <TextView
-                            android:layout_width="20dp"
+                            android:id="@+id/tv_picker_start_label"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="🟢"
-                            android:textSize="12sp" />
+                            android:text="● ORIGIN: Current Location (Fused INS)"
+                            android:textColor="#FF34D399"
+                            android:textSize="10.5sp"
+                            android:fontFamily="sans-serif-bold"
+                            android:layout_marginBottom="6dp" />
 
-                        <TextView
-                            android:id="@+id/tv_active_start_title"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:text="START: Your Location"
-                            android:textColor="#A7F3D0"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="end" />
-                    </LinearLayout>
-
-                    <!-- Dotted Line Divider -->
-                    <View
-                        android:layout_width="2dp"
-                        android:layout_height="8dp"
-                        android:layout_marginStart="9dp"
-                        android:background="#475569" />
-
-                    <!-- END POINT & METRICS Row -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="20dp"
-                            android:layout_height="wrap_content"
-                            android:text="🔴"
-                            android:textSize="12sp" />
-
+                        <!-- Search Input Field -->
                         <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_search_input"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="10dp">
 
-                            <TextView
-                                android:id="@+id/tv_active_dest_title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="END: Metro Underground Tunnel"
-                                android:textColor="@color/white"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:maxLines="1"
-                                android:ellipsize="end" />
+                            <ImageView
+                                android:id="@+id/btn_search_icon"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_search_black"
+                                app:tint="#FF9CA3AF" />
 
-                            <TextView
-                                android:id="@+id/tv_active_route_metrics"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Remaining: 2.4 km · ETA: 7 min · OSRM Route"
-                                android:textColor="#38BDF8"
-                                android:textSize="10sp" />
+                            <EditText
+                                android:id="@+id/et_search_destination"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:background="@null"
+                                android:hint="Search destination or enter coords..."
+                                android:imeOptions="actionSearch"
+                                android:inputType="text"
+                                android:textColor="#FFFFFFFF"
+                                android:textColorHint="#FF9CA3AF"
+                                android:textSize="12.5sp" />
+
+                            <ImageView
+                                android:id="@+id/btn_clear_search"
+                                android:layout_width="16dp"
+                                android:layout_height="16dp"
+                                android:src="@drawable/ic_chevron_down"
+                                app:tint="#FF9CA3AF"
+                                android:clickable="true"
+                                android:focusable="true" />
                         </LinearLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btn_cancel_route"
-                            android:layout_width="wrap_content"
+                        <!-- Segmented Map Controls: [ Vector Map | Satellite ] + Fetch GPS -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="34dp"
-                            android:text="END ROUTE"
-                            android:textColor="@color/white"
-                            android:textSize="10sp"
-                            android:textStyle="bold"
-                            app:backgroundTint="#B71C1C"
-                            app:cornerRadius="8dp" />
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <LinearLayout
+                                android:id="@+id/container_layer_segmented"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_dynamic_island_pill"
+                                android:orientation="horizontal"
+                                android:padding="2dp">
+
+                                <TextView
+                                    android:id="@+id/btn_osm_view"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="Vector Map"
+                                    android:textColor="#FFFFFFFF"
+                                    android:textSize="11sp"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:background="@drawable/bg_dynamic_island_pill"
+                                    android:backgroundTint="#FF262A34"
+                                    android:clickable="true"
+                                    android:focusable="true" />
+
+                                <TextView
+                                    android:id="@+id/btn_sat_view"
+                                    android:layout_width="0dp"
+                                    android:layout_height="match_parent"
+                                    android:layout_weight="1"
+                                    android:gravity="center"
+                                    android:text="Satellite"
+                                    android:textColor="#FFA1A1AA"
+                                    android:textSize="11sp"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:clickable="true"
+                                    android:focusable="true" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/btn_fetch_gps_now"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_dynamic_island_pill"
+                                android:backgroundTint="#FF1F2937"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:paddingHorizontal="12dp"
+                                android:text="📍 GPS Lock"
+                                android:textColor="#FF34D399"
+                                android:textSize="11sp"
+                                android:fontFamily="sans-serif-bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/container_search_suggestions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:visibility="gone"
+                            android:layout_marginTop="6dp" />
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/panel_active_route"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+        </com.google.android.material.card.MaterialCardView>
 
-    <!-- 3. FLOATING OUTAGE BANNER: Live Google Maps vs iNAV Differentiator -->
+        <!-- Live Lane Guidance HUD Component -->
+        <LinearLayout
+            android:id="@+id/container_floating_lanes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_floating_lanes"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LANES"
+                android:textColor="#FFA1A1AA"
+                android:textSize="9sp"
+                android:fontFamily="monospace"
+                android:letterSpacing="0.08"
+                android:layout_marginEnd="8dp" />
+
+            <LinearLayout
+                android:id="@+id/container_lane_items"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Default Lane 1 (Straight Active) -->
+                <FrameLayout
+                    android:layout_width="20dp"
+                    android:layout_height="22dp"
+                    android:background="@drawable/bg_lane_pill"
+                    android:backgroundTint="#FFFFFFFF">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="↑"
+                        android:textColor="#FF000000"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-bold" />
+                </FrameLayout>
+
+                <!-- Default Lane 2 (Straight Active) -->
+                <FrameLayout
+                    android:layout_width="20dp"
+                    android:layout_height="22dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_lane_pill"
+                    android:backgroundTint="#FFFFFFFF">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="↑"
+                        android:textColor="#FF000000"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-bold" />
+                </FrameLayout>
+
+                <!-- Default Lane 3 (Turn Dimmed) -->
+                <FrameLayout
+                    android:layout_width="20dp"
+                    android:layout_height="22dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_lane_pill"
+                    android:backgroundTint="#FF17191D">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="↱"
+                        android:textColor="#FF52525B"
+                        android:textSize="12sp" />
+                </FrameLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 3. FLOATING RIGHT MAP ACTION BUTTONS (Exact Reference Stack) -->
+    <LinearLayout
+        android:id="@+id/cluster_right_controls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="14dp"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:elevation="12dp"
+        app:layout_constraintTop_toBottomOf="@id/top_interface_area"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Landmark Callout (Rockefeller Center) -->
+        <LinearLayout
+            android:id="@+id/card_landmark_callout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_control_tile_uber"
+            android:backgroundTint="#F212151B"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏢"
+                android:textSize="11sp"
+                android:layout_marginEnd="6dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rockefeller Center"
+                    android:textColor="#FFF1F3F7"
+                    android:textSize="9.5sp"
+                    android:fontFamily="sans-serif-bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Live Congestion: Low"
+                    android:textColor="#FF717A8C"
+                    android:textSize="8sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Audio State Unmuted Bubble (Floating Pill) -->
+        <TextView
+            android:id="@+id/tv_audio_tooltip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp"
+            android:background="@drawable/bg_tooltip_dark"
+            android:paddingHorizontal="7dp"
+            android:paddingVertical="2dp"
+            android:text="Unmuted"
+            android:textColor="#FFD4D4D8"
+            android:textSize="9.5sp"
+            android:fontFamily="sans-serif-medium"
+            android:visibility="gone" />
+
+        <!-- 1. Bookmark / Saved Pin FAB (Pure White Circle with Black Icon) -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_bookmark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="Bookmark Location"
+            android:src="@drawable/ic_dest_pin"
+            app:fabCustomSize="46dp"
+            app:maxImageSize="22dp"
+            app:backgroundTint="#FFFFFFFF"
+            app:tint="#FF000000"
+            app:elevation="6dp"
+            app:borderWidth="0dp" />
+
+        <!-- 2. Coffee / Amenities FAB (Pure White Circle with Black Coffee Icon) -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_coffee"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="Coffee and Amenities"
+            android:src="@drawable/ic_coffee"
+            app:fabCustomSize="46dp"
+            app:maxImageSize="22dp"
+            app:backgroundTint="#FFFFFFFF"
+            app:tint="#FF000000"
+            app:elevation="6dp"
+            app:borderWidth="0dp" />
+
+        <!-- 3. Reroute / Directions FAB (Pure White Circle with Black Reroute Icon) -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_reroute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="Alternative Routes"
+            android:src="@drawable/ic_route_alternatives_black"
+            app:fabCustomSize="46dp"
+            app:maxImageSize="22dp"
+            app:backgroundTint="#FFFFFFFF"
+            app:tint="#FF000000"
+            app:elevation="6dp"
+            app:borderWidth="0dp" />
+
+        <!-- Legacy / Fallback FAB references for complete binding compatibility -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_layers"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_track_up"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_compass"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_my_location"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Apple Maps Home Floating Controls Capsule (Layers + Location) -->
+    <LinearLayout
+        android:id="@+id/cluster_home_controls"
+        android:layout_width="46dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_apple_controls_capsule"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:elevation="10dp"
+        android:paddingVertical="4dp"
+        app:layout_constraintBottom_toTopOf="@id/container_home_sheet"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Layer / Map Mode -->
+        <FrameLayout
+            android:id="@+id/btn_home_layers"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_layers_black" />
+        </FrameLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="28dp"
+            android:layout_height="0.75dp"
+            android:background="#14000000" />
+
+        <!-- Recenter / My Location Arrow -->
+        <FrameLayout
+            android:id="@+id/btn_home_location"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_apple_location_arrow" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- 4. SPEED & ACCURACY TELEMETRY CLUSTER (Bottom Left above Sheet - Matching User Screenshot) -->
+    <LinearLayout
+        android:id="@+id/cluster_speed_telemetry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginBottom="12dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:elevation="14dp"
+        app:layout_constraintBottom_toTopOf="@id/card_trip_cockpit"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Speed Limit Sign Badge (35 LIMIT) -->
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_speed_limit_sign">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_speed_limit_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="35"
+                    android:textColor="#FF000000"
+                    android:textSize="17sp"
+                    android:fontFamily="sans-serif-black"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LIMIT"
+                    android:textColor="#FF000000"
+                    android:textSize="7sp"
+                    android:fontFamily="sans-serif-black"
+                    android:includeFontPadding="false" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Blue Shield Button (Matching User Screenshot) -->
+        <FrameLayout
+            android:id="@+id/btn_shield_safety"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_circular_button"
+            android:backgroundTint="#FFFFFFFF"
+            android:elevation="6dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_shield_blue" />
+        </FrameLayout>
+
+        <!-- Hidden / Fallback references so existing view bindings work -->
+        <TextView
+            android:id="@+id/tv_speed_value"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+        <TextView
+            android:id="@+id/tv_speed_unit"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+        <com.inav.navigation.ui.AttitudeIndicatorView
+            android:id="@+id/attitude_indicator"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 4b. CURRENT STREET FLOATING PILL (Matching User Screenshot) -->
+    <LinearLayout
+        android:id="@+id/pill_current_street"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_current_street_pill"
+        android:elevation="14dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="7dp"
+        android:gravity="center"
+        app:layout_constraintBottom_toTopOf="@id/card_trip_cockpit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tv_current_street_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current Street"
+            android:textColor="#FF18181B"
+            android:textSize="12.5sp"
+            android:fontFamily="sans-serif-bold" />
+    </LinearLayout>
+
+    <!-- 5. TACTICAL OUTAGE ALERT BANNER -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/outage_banner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
+        android:layout_marginHorizontal="14dp"
         android:layout_marginTop="8dp"
-        app:cardBackgroundColor="#E62C1242"
+        app:cardBackgroundColor="#F70C0D11"
         app:cardCornerRadius="14dp"
-        app:cardElevation="8dp"
-        app:strokeColor="#7B1FA2"
-        app:strokeWidth="1dp"
+        app:cardElevation="12dp"
+        app:strokeColor="#FFDC2626"
+        app:strokeWidth="1.5dp"
         android:visibility="gone"
         tools:visibility="visible"
-        app:layout_constraintTop_toBottomOf="@id/card_top_nav">
+        app:layout_constraintTop_toBottomOf="@id/top_interface_area">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="12dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="10dp"
+            android:paddingHorizontal="14dp">
 
-            <TextView
-                android:id="@+id/tv_outage_timer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="⚠️ GPS BLACKOUT: 0.0s | PURE DEAD RECKONING ACTIVE"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <!-- Side-by-Side Comparison Badge -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/tv_gmaps_vs_status"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="#B71C1C"
-                    android:gravity="center"
-                    android:paddingVertical="3dp"
-                    android:paddingHorizontal="4dp"
-                    android:text="GOOGLE MAPS: ❌ SIGNAL LOST"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <View
-                    android:layout_width="6dp"
-                    android:layout_height="1dp" />
+                    android:text="GOOGLE MAPS: ❌ SIGNAL LOST (FROZEN)"
+                    android:textColor="#FFEF4444"
+                    android:textSize="11sp"
+                    android:fontFamily="sans-serif-bold" />
 
                 <TextView
                     android:id="@+id/tv_inav_vs_status"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="#00C853"
-                    android:gravity="center"
-                    android:paddingVertical="3dp"
-                    android:paddingHorizontal="4dp"
-                    android:text="iNAV: ✅ DEAD RECKONING"
-                    android:textColor="@color/black"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="2dp"
+                    android:text="iNAV: ✅ 15-STATE ES-EKF DEAD RECKONING"
+                    android:textColor="#FF34D399"
+                    android:textSize="11sp"
+                    android:fontFamily="sans-serif-bold" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/btn_outage_resume"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="RESUME"
+                android:textColor="#FFFFFFFF"
+                android:textSize="10.5sp"
+                android:fontFamily="sans-serif-black"
+                android:background="@drawable/bg_circle_blue"
+                android:backgroundTint="#FF10B981"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="5dp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- 4. FLOATING MAP ACTION BUTTONS (Right Edge Vertical Stack) -->
+    <!-- 5b. APPLE MAPS HOME SHEET -->
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="12dp"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        app:layout_constraintTop_toBottomOf="@id/outage_banner"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- Map Layers FAB (Cesium Ion Satellite / Street) -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_layers"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="Map Layers and Satellite"
-            android:src="@drawable/ic_layers"
-            app:backgroundTint="#D91E222A"
-            app:tint="#F59E0B"
-            app:fabSize="mini" />
-
-        <!-- Compass FAB -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_compass"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="Compass Reset North"
-            android:src="@android:drawable/ic_menu_compass"
-            app:backgroundTint="#D91E222A"
-            app:tint="#EF4444"
-            app:fabSize="mini" />
-
-        <!-- Track-Up Toggle -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_track_up"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:contentDescription="Toggle Track-Up Follow"
-            android:src="@android:drawable/ic_menu_directions"
-            app:backgroundTint="#D91E222A"
-            app:tint="#38BDF8"
-            app:fabSize="mini" />
-
-        <!-- My Location Re-center -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_my_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="Center Location"
-            android:src="@android:drawable/ic_menu_mylocation"
-            app:backgroundTint="#D91E222A"
-            app:tint="#4ADE80"
-            app:fabSize="mini" />
-    </LinearLayout>
-
-    <!-- 5. 3D ARTIFICIAL HORIZON COCKPIT GAUGE (Bottom Left Floating Dial) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_attitude"
-        android:layout_width="66dp"
-        android:layout_height="66dp"
-        android:layout_marginStart="14dp"
-        android:layout_marginBottom="14dp"
-        app:cardBackgroundColor="#E60F172A"
-        app:cardCornerRadius="33dp"
-        app:cardElevation="8dp"
-        app:strokeColor="#334155"
-        app:strokeWidth="1.5dp"
-        app:layout_constraintBottom_toTopOf="@id/bottom_cockpit_card"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <com.inav.navigation.ui.AttitudeIndicatorView
-            android:id="@+id/attitude_indicator"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="2dp" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <!-- 6. FLOATING BOTTOM NAVIGATION & SENSOR COCKPIT (Google Maps Style) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/bottom_cockpit_card"
+        android:id="@+id/container_home_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="12dp"
-        app:cardBackgroundColor="#F2141720"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="10dp"
-        app:strokeColor="#282D3C"
-        app:strokeWidth="1dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:background="@drawable/bg_home_sheet"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="20dp"
+        android:elevation="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- Top Grab Handle -->
+        <View
+            android:id="@+id/pill_home_handle"
+            android:layout_width="38dp"
+            android:layout_height="4.5dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_grab_handle"
+            android:backgroundTint="#FFD1D5DB" />
+
+        <!-- Search Bar Row -->
+        <LinearLayout
+            android:id="@+id/home_search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@drawable/bg_apple_search_bar"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_search_black"
+                app:tint="#FF71717A" />
+
+            <EditText
+                android:id="@+id/et_home_search"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:background="@null"
+                android:hint="Search Maps"
+                android:textColor="#FF000000"
+                android:textColorHint="#FF71717A"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif"
+                android:focusable="false"
+                android:clickable="false"
+                android:cursorVisible="false"
+                android:longClickable="false" />
+
+            <ImageView
+                android:id="@+id/btn_home_voice"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_mic_apple"
+                app:tint="#FF71717A"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <FrameLayout
+                android:id="@+id/btn_user_profile"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_avatar_as"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="AS"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-bold" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Collapsible Content (Places, Recents, Guides) -->
+        <LinearLayout
+            android:id="@+id/layout_home_sheet_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Places Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Places"
+                android:textColor="#FF000000"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ›"
+                android:textColor="#FF8E8E93"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
 
-            <!-- Primary Metrics Bar: Speed, Heading, Outage Toggle -->
+        <!-- Places Row (Home, Work, Add) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginHorizontal="16dp"
+            android:orientation="horizontal">
+
+            <!-- Home -->
+            <LinearLayout
+                android:id="@+id/btn_place_home"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:background="@drawable/bg_place_action">
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_home_apple" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Home"
+                    android:textColor="#FF000000"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium" />
+                <TextView
+                    android:id="@+id/tv_home_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Saved"
+                    android:textColor="#FF007AFF"
+                    android:textSize="10.5sp" />
+            </LinearLayout>
+
+            <!-- Work -->
+            <LinearLayout
+                android:id="@+id/btn_place_work"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:background="@drawable/bg_place_action">
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_briefcase_apple" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Work"
+                    android:textColor="#FF000000"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add"
+                    android:textColor="#FF007AFF"
+                    android:textSize="10.5sp" />
+            </LinearLayout>
+
+            <!-- Add -->
+            <LinearLayout
+                android:id="@+id/btn_place_add"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:background="@drawable/bg_place_action">
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_plus_blue" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:text="Add"
+                    android:textColor="#FF000000"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" "
+                    android:textSize="10.5sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Recents Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginHorizontal="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recents"
+                android:textColor="#FF000000"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ›"
+                android:textColor="#FF8E8E93"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- Recents Card Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@drawable/bg_recents_card"
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="6dp">
+
+            <!-- Recent Item 1: Foothills Park -->
+            <LinearLayout
+                android:id="@+id/btn_recent_foothills"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_circle_green">
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_tree_park" />
+                </FrameLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Indore Junction Railway Station"
+                        android:textColor="#FF000000"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chhoti Gwaltoli, Indore"
+                        android:textColor="#FF8E8E93"
+                        android:textSize="11sp"
+                        android:singleLine="true" />
+                </LinearLayout>
+                <ImageView
+                    android:id="@+id/btn_more_foothills"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/ic_more_horiz" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.75dp"
+                android:background="#14000000"
+                android:layout_marginStart="44dp" />
+
+            <!-- Recent Item 2: Edison St -->
+            <LinearLayout
+                android:id="@+id/btn_recent_edison"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_place_action">
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_dest_pin"
+                        app:tint="#FF007AFF" />
+                </FrameLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rajwada Historic Palace"
+                        android:textColor="#FF000000"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="M.G. Road, Indore"
+                        android:textColor="#FF8E8E93"
+                        android:textSize="11sp"
+                        android:singleLine="true" />
+                </LinearLayout>
+                <ImageView
+                    android:id="@+id/btn_more_edison"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/ic_more_horiz" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.75dp"
+                android:background="#14000000"
+                android:layout_marginStart="44dp" />
+
+            <!-- Recent Item 3: Royal Gas -->
+            <LinearLayout
+                android:id="@+id/btn_recent_gas"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true">
+                <FrameLayout
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="@drawable/bg_circle_blue">
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_gas_pump" />
+                </FrameLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Devi Ahilya Bai Holkar Airport"
+                        android:textColor="#FF000000"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Depalpur Road, Indore"
+                        android:textColor="#FF8E8E93"
+                        android:textSize="11sp"
+                        android:singleLine="true" />
+                </LinearLayout>
+                <ImageView
+                    android:id="@+id/btn_more_gas"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/ic_more_horiz" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Your Guides Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginHorizontal="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your Guides"
+                android:textColor="#FF000000"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ›"
+                android:textColor="#FF8E8E93"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- Guide Card (Favorites) -->
+        <LinearLayout
+            android:id="@+id/card_guide_favorites"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="16dp"
+            android:background="@drawable/bg_guide_card"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+                <ImageView
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_star_guide" />
+                <ImageView
+                    android:id="@+id/btn_more_favorites"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="top|end"
+                    android:padding="4dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/ic_more_horiz" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Favorites"
+                android:textColor="#FF000000"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-bold" />
+        </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 6. BOTTOM TRIP SHEET (Floating Pure White Sheet - Google Maps / Voyager Format) -->
+    <LinearLayout
+        android:id="@+id/card_trip_cockpit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_sheet_trip_white"
+        android:orientation="vertical"
+        android:paddingTop="10dp"
+        android:paddingBottom="20dp"
+        android:paddingHorizontal="18dp"
+        android:elevation="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Grab Handle Bar -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/bg_grab_handle"
+            android:backgroundTint="#FFD4D4D8" />
+
+        <!-- Duration, Mileage, & Action Buttons Row (Matching User Screenshot) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Left: Settings / Options Button (Matching User Screenshot) -->
+            <FrameLayout
+                android:id="@+id/btn_trip_route_options"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_circular_button"
+                android:backgroundTint="#FFF4F4F5"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_tune_sliders" />
+            </FrameLayout>
+
+            <!-- Center: Bold Duration, Red Passenger Badge, Distance, & Destination -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Bold Duration -->
+                    <TextView
+                        android:id="@+id/tv_trip_eta_mins"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FF000000"
+                        android:textSize="22sp"
+                        android:fontFamily="sans-serif-black"
+                        android:includeFontPadding="false" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="3dp"
+                        android:text="min"
+                        android:textColor="#FF000000"
+                        android:textSize="17sp"
+                        android:fontFamily="sans-serif-black" />
+
+                    <!-- Optional Passenger Badge (Hidden by default) -->
+                    <ImageView
+                        android:id="@+id/iv_trip_passenger_badge"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginHorizontal="8dp"
+                        android:src="@drawable/bg_user_badge_red"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="6dp"
+                        android:text="·"
+                        android:textColor="#FF71717A"
+                        android:textSize="20sp"
+                        android:fontFamily="sans-serif-black" />
+
+                    <TextView
+                        android:id="@+id/tv_active_route_metrics"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="-- mi"
+                        android:textColor="#FF000000"
+                        android:textSize="22sp"
+                        android:fontFamily="sans-serif-black"
+                        android:includeFontPadding="false" />
+                </LinearLayout>
+
+                <!-- Subtitle: Destination Title -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_active_dest_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxWidth="220dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:text="Ready to Navigate"
+                        android:textColor="#FF71717A"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <TextView
+                        android:id="@+id/tv_road_snapped_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Right: Itinerary List Button -->
+            <FrameLayout
+                android:id="@+id/btn_trip_steps_list"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_circular_button"
+                android:backgroundTint="#FFF4F4F5"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_menu_list" />
+            </FrameLayout>
+
+            <!-- Dedicated Red End Navigation Button -->
+            <FrameLayout
+                android:id="@+id/btn_end_route"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_circular_button"
+                android:backgroundTint="#FEE2E2"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_close_white"
+                    app:tint="#DC2626" />
+            </FrameLayout>
+
+            <!-- Fallback references for binding compatibility -->
+            <FrameLayout
+                android:id="@+id/btn_ctrl_overview"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel_route"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Voyager Telemetry & Sensor Precision Bar (Footer) -->
+        <LinearLayout
+            android:id="@+id/header_toggle_sensors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_shield_telemetry" />
+
+            <TextView
+                android:id="@+id/tv_uncertainty"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:text="GNSS + INS Fusion • 99.4% Precision"
+                android:textColor="#FF52525B"
+                android:textSize="10.5sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/tv_sensors_toggle_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VOYAGER OS"
+                android:textColor="#FF71717A"
+                android:textSize="10sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+        </LinearLayout>
+
+        <!-- Expandable Sensors Detail Cockpit -->
+        <LinearLayout
+            android:id="@+id/container_sensors_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="10dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="8dp"
+                android:background="#FFE5E5E5" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
 
-                <!-- Speedometer Display -->
+                <com.inav.navigation.ui.AttitudeIndicatorView
+                    android:id="@+id/attitude_indicator_cockpit"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginEnd="10dp" />
+
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/tv_speed_value"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0.0"
-                        android:textColor="#38BDF8"
-                        android:textSize="32sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SPEED (KM/H)"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="40dp"
-                    android:background="#2E3342" />
-
-                <!-- Heading & Road Status -->
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.1"
-                    android:orientation="vertical"
-                    android:gravity="center">
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tv_heading_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0° N"
-                        android:textColor="@color/white"
-                        android:textSize="26sp"
-                        android:textStyle="bold" />
+                        android:text="358° N HEADING"
+                        android:textColor="#FF000000"
+                        android:textSize="12sp"
+                        android:fontFamily="sans-serif-black" />
 
                     <TextView
+                        android:id="@+id/tv_attitude_angles"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="HEADING / COMPASS"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="10sp" />
+                        android:text="Pitch: 0.0° · Roll: 0.0°"
+                        android:textColor="#FF6B7280"
+                        android:textSize="9.5sp"
+                        android:fontFamily="monospace" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="40dp"
-                    android:background="#2E3342" />
-
-                <!-- Simulate Outage (Tunnel Test) Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_toggle_outage"
-                    android:layout_width="0dp"
-                    android:layout_height="46dp"
-                    android:layout_weight="1.2"
-                    android:layout_marginStart="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
                     android:text="BLACKOUT"
-                    android:textColor="@color/white"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="#D32F2F"
-                    app:cornerRadius="12dp" />
-            </LinearLayout>
-
-            <!-- Road Event & Uncertainty Badge -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tv_road_event"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Road: Detecting..."
-                    android:textColor="#E2E8F0"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:maxLines="1"
-                    android:ellipsize="end" />
-
-                <TextView
-                    android:id="@+id/tv_road_snapped_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="6dp"
-                    android:background="#1B5E20"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="2dp"
-                    android:text="ROAD LOCKED"
-                    android:textColor="@color/white"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_uncertainty"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="σ: ±0.30 m"
-                    android:textColor="#4ADE80"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <!-- Toggle Cockpit Details Header (Swipe / Tap Handle) -->
-            <LinearLayout
-                android:id="@+id/header_toggle_sensors"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="#1E2330"
-                android:gravity="center"
-                android:paddingVertical="6dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:id="@+id/tv_sensors_toggle_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="▼ ALL SENSORS LIVE STREAM · TAP TO INSPECT"
-                    android:textColor="#38BDF8"
+                    android:textColor="#FFFFFFFF"
                     android:textSize="10sp"
-                    android:letterSpacing="0.08"
-                    android:textStyle="bold" />
+                    android:fontFamily="sans-serif-bold"
+                    app:backgroundTint="#FF272A30"
+                    app:cornerRadius="8dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
             </LinearLayout>
 
-            <!-- Expandable Sensors Detail Container -->
-            <LinearLayout
-                android:id="@+id/container_sensors_detail"
+            <TextView
+                android:id="@+id/tv_coordinates"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="22.7196° N, 75.8577° E"
+                android:textColor="#FF737373"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/tv_sensor_accel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:text="ACCEL: 0.00, 0.00, 9.81 m/s²"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                <!-- Sensor Row 1: Magnetometer & Gyroscope -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tv_sensor_gyro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="GYRO: 0.00, 0.00, 0.00 rad/s"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                    <!-- Magnetometer Panel -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
+            <TextView
+                android:id="@+id/tv_sensor_mag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="MAG: 0.0, 0.0, 0.0 µT"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🧭 MAGNETOMETER"
-                            android:textColor="@color/accent_amber"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tv_sensor_baro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BARO: 1013.25 hPa · Alt: 520m"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                        <TextView
-                            android:id="@+id/tv_sensor_mag"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="B: [0.0, 0.0, 0.0] µT\nMag Hdg: 0° (N)"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
+            <TextView
+                android:id="@+id/tv_sensor_gnss"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="GNSS: FIX 3D (18 sats, DOP 0.9)"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                    <!-- Gyroscope Panel -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
+            <TextView
+                android:id="@+id/tv_sensor_obd"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="OBD: Disconnected (PID 010D)"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🌀 GYROSCOPE"
-                            android:textColor="#38BDF8"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tv_sensor_pdr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PDR: Inactive (Vehicular Mode)"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
 
-                        <TextView
-                            android:id="@+id/tv_sensor_gyro"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="ω: [0.0, 0.0, 0.0] °/s\nBias b_ω: 0.02 °/s"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Sensor Row 2: Accelerometer & Barometer -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
-
-                    <!-- Accelerometer Panel -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⚡ ACCELEROMETER"
-                            android:textColor="@color/accent_green"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_sensor_accel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="a: [0.0, 0.0, 9.81] m/s²\nLin Fwd: 0.0 m/s²"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-
-                    <!-- Barometer Panel -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🏔️ BAROMETER"
-                            android:textColor="#BA68C8"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_sensor_baro"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1013.2 hPa | Alt: 540 m\nClimb: 0.0 m/s | Grade: 0%"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Sensor Row 3: GNSS Raw & Environment -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
-
-                    <!-- GNSS Raw Stats -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🛰️ GNSS CONSTELLATION"
-                            android:textColor="#4FC3F7"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_sensor_gnss"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="18 Sats View | 12 Used\nFix: 3D DGPS Multi"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-
-                    <!-- Environment & OBD-II -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:background="#1A2230"
-                        android:orientation="vertical"
-                        android:padding="6dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="💡 ENVIRONMENT / OBD"
-                            android:textColor="#FFD54F"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_sensor_env"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Light: 350 lx (Daylight)\nOBD: Disconnected | k: 1.0"
-                            android:textColor="@color/white"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- Coordinates Footnote -->
-                <TextView
-                    android:id="@+id/tv_coordinates"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Lat: 0.000000 | Lon: 0.000000 | Pitch: 0.0° | Roll: 0.0°"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="9sp"
-                    android:gravity="center" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tv_sensor_env"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ENV: LUX 120 · Normal Ambient"
+                android:textColor="#FF404040"
+                android:textSize="9.5sp"
+                android:fontFamily="monospace" />
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
 
-    <!-- 7. HUD WINDSHIELD PROJECTION OVERLAY -->
+        <!-- Hidden Compatibility views -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone">
+            <TextView android:id="@+id/tv_ios_time" android:layout_width="0dp" android:layout_height="0dp" />
+            <TextView android:id="@+id/tv_ios_status_icons" android:layout_width="0dp" android:layout_height="0dp" />
+            <View android:id="@+id/pill_dynamic_island" android:layout_width="0dp" android:layout_height="0dp" />
+            <TextView android:id="@+id/tv_top_sub_status" android:layout_width="0dp" android:layout_height="0dp" />
+            <TextView android:id="@+id/tv_road_event" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tv_outage_timer" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tv_mode_badge" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <TextView android:id="@+id/tv_active_start_title" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <View android:id="@+id/btn_ctrl_recenter" android:layout_width="0dp" android:layout_height="0dp" />
+            <View android:id="@+id/btn_ctrl_layers" android:layout_width="0dp" android:layout_height="0dp" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- 7. FULL-SCREEN HUD WINDSHIELD PROJECTION OVERLAY -->
     <FrameLayout
         android:id="@+id/hud_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000"
+        android:background="#FF05070A"
         android:clickable="true"
         android:focusable="true"
+        android:elevation="100dp"
         android:visibility="gone"
         tools:visibility="gone">
 
@@ -976,7 +1819,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="24dp">
+            android:padding="28dp">
 
             <TextView
                 android:id="@+id/tv_hud_mode_tag"
@@ -984,53 +1827,57 @@
                 android:layout_height="wrap_content"
                 android:text="iNAV HUD · WINDSHIELD PROJECTION"
                 android:textColor="#00E5FF"
-                android:textSize="14sp"
-                android:letterSpacing="0.2"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.2" />
 
             <TextView
                 android:id="@+id/tv_hud_speed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0.0"
-                android:textColor="#FFFFFF"
-                android:textSize="96sp"
-                android:textStyle="bold" />
+                android:text="35"
+                android:textColor="#FFFFFFFF"
+                android:textSize="108sp"
+                android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="KM/H"
-                android:textColor="#9E9E9E"
-                android:textSize="18sp" />
+                android:text="MPH"
+                android:textColor="#71717A"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-bold" />
 
             <TextView
                 android:id="@+id/tv_hud_heading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="HEADING: 0° N"
-                android:textColor="#00E676"
-                android:textSize="24sp"
+                android:layout_marginTop="20dp"
+                android:text="HEADING: 358° N"
+                android:textColor="#10B981"
+                android:textSize="22sp"
+                android:fontFamily="monospace"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tv_hud_road"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="ROAD LOCKED: UNDERGROUND METRO TUNNEL"
-                android:textColor="#FFD600"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="14dp"
+                android:text="INAV NAVIGATION ACTIVE"
+                android:textColor="#FBBF24"
+                android:textSize="17sp"
+                android:fontFamily="sans-serif-black" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="36dp"
                 android:text="TAP SCREEN TO EXIT HUD MODE"
-                android:textColor="#757575"
-                android:textSize="12sp" />
+                android:textColor="#52525B"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium" />
         </LinearLayout>
     </FrameLayout>
 

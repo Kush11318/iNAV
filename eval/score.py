@@ -121,15 +121,64 @@ def compute_trajectory_errors(
     cep50 = float(np.percentile(radial_errors, 50))
     cep95 = float(np.percentile(radial_errors, 95))
 
+    # Trajectory-wide cross-track calculation against ground-truth polyline segments
+    lat0, lon0 = float(g_lat[0]), float(g_lon[0])
+    g_E, g_N = latlon_to_local_xy_m(g_lat, g_lon, lat0, lon0)
+    p_E, p_N = latlon_to_local_xy_m(p_lat, p_lon, lat0, lon0)
+
+    ct_errors = []
+    num_pts = len(p_E)
+    num_gt = len(g_E)
+    if num_gt >= 2:
+        for idx in range(num_pts):
+            pt = np.array([p_N[idx], p_E[idx]])
+            start_k = max(0, idx - 10)
+            end_k = min(num_gt - 1, idx + 10)
+            best_d = float('inf')
+            signed_ct = 0.0
+            for k in range(start_k, end_k):
+                a = np.array([g_N[k], g_E[k]])
+                b = np.array([g_N[k+1], g_E[k+1]])
+                ab = b - a
+                ab_sq = float(np.dot(ab, ab))
+                if ab_sq < 1e-6:
+                    continue
+                t = float(np.clip(np.dot(pt - a, ab) / ab_sq, 0.0, 1.0))
+                proj = a + t * ab
+                d = float(np.linalg.norm(pt - proj))
+                if d < best_d:
+                    best_d = d
+                    psi_seg = float(np.arctan2(ab[1], ab[0]))
+                    n_vec = np.array([-np.sin(psi_seg), np.cos(psi_seg)])
+                    signed_ct = float(np.dot(pt - proj, n_vec))
+            if best_d < float('inf'):
+                ct_errors.append(signed_ct)
+
+    median_abs_ct = float(np.median(np.abs(ct_errors))) if ct_errors else np.nan
+    p95_abs_ct = float(np.percentile(np.abs(ct_errors), 95)) if ct_errors else np.nan
+
     along_track = np.nan
     cross_track = np.nan
     hdg_err = np.nan
 
-    if gt_heading_deg is not None:
-        last_hdg = float(gt_heading_deg[mask][-1])
+    last_hdg = np.nan
+    if gt_heading_deg is not None and len(gt_heading_deg[mask]) > 0:
+        val = float(gt_heading_deg[mask][-1])
+        if not np.isnan(val):
+            last_hdg = val
+
+    if np.isnan(last_hdg) and len(g_lat) >= 2:
+        dE_gt = (g_lon[-1] - g_lon[-2]) * (np.pi / 180.0) * EARTH_RADIUS_M * np.cos(np.deg2rad(g_lat[-1]))
+        dN_gt = (g_lat[-1] - g_lat[-2]) * (np.pi / 180.0) * EARTH_RADIUS_M
+        if np.hypot(dE_gt, dN_gt) > 0.01:
+            last_hdg = float(np.degrees(np.arctan2(dE_gt, dN_gt)) % 360.0)
+
+    if not np.isnan(last_hdg):
         along_track, cross_track = decompose_along_cross_track(p_lat[-1], p_lon[-1], g_lat[-1], g_lon[-1], last_hdg)
-        if pred_heading_deg is not None:
-            hdg_err = wrap_heading_error(float(pred_heading_deg[mask][-1]), last_hdg)
+        if pred_heading_deg is not None and len(pred_heading_deg[mask]) > 0:
+            val = float(pred_heading_deg[mask][-1])
+            if not np.isnan(val):
+                hdg_err = wrap_heading_error(val, last_hdg)
         elif len(p_lat) >= 2:
             dE = (p_lon[-1] - p_lon[-2]) * (np.pi / 180.0) * EARTH_RADIUS_M * np.cos(np.deg2rad(g_lat[-1]))
             dN = (p_lat[-1] - p_lat[-2]) * (np.pi / 180.0) * EARTH_RADIUS_M
@@ -145,6 +194,8 @@ def compute_trajectory_errors(
         "cep95_m": cep95,
         "along_track_m": along_track,
         "cross_track_m": cross_track,
+        "median_cross_track_m": median_abs_ct,
+        "p95_cross_track_m": p95_abs_ct,
         "heading_error_deg": hdg_err,
         "valid_samples": int(np.sum(mask))
     }

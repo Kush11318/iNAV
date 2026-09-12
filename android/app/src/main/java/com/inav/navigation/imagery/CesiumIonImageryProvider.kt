@@ -6,11 +6,6 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
-import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
-import org.osmdroid.tileprovider.tilesource.XYTileSource
-import org.osmdroid.util.MapTileIndex
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -136,75 +131,26 @@ object CesiumIonImageryProvider {
         }
     }
 
+    const val ESRI_SATELLITE_URL = "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+
     /**
-     * Builds an OSMDroid tile source backed by Cesium Ion imagery.
+     * Builds a tile URL template for Cesium Ion imagery.
      */
-    fun createCesiumIonTileSource(endpoint: IonEndpointResult, assetId: Int): OnlineTileSourceBase {
-        activeIonSessionToken = endpoint.accessToken
-
-        // Inject Authorization header for all tile requests
-        Configuration.getInstance().additionalHttpRequestProperties["Authorization"] =
-            "Bearer ${endpoint.accessToken}"
-
+    fun getCesiumIonTileUrlTemplate(endpoint: IonEndpointResult): String {
         val base = if (endpoint.url.endsWith("/")) endpoint.url else "${endpoint.url}/"
-
-        return object : OnlineTileSourceBase(
-            "CesiumIon_$assetId",
-            0,
-            19,
-            256,
-            ".png",
-            arrayOf(base),
-            endpoint.attribution,
-            TileSourcePolicy(8, 0)
-        ) {
-            override fun getTileURLString(pMapTileIndex: Long): String {
-                val zoom = MapTileIndex.getZoom(pMapTileIndex)
-                val x = MapTileIndex.getX(pMapTileIndex)
-                // TMS specification uses inverted Y axis: y_tms = (1 shl zoom) - 1 - y_osm
-                val yTms = (1 shl zoom) - 1 - MapTileIndex.getY(pMapTileIndex)
-                return "$baseUrl$zoom/$x/$yTms.png"
-            }
-        }
+        return "${base}{z}/{x}/{y}.png"
     }
 
     /**
-     * Keyless Esri World Imagery (ArcGIS Online) satellite tile source.
+     * Keyless Esri World Imagery (ArcGIS Online) satellite tile source URL.
      * Direct equivalent of God's Eye View's default satellite stack.
-     * Works with 0 configuration.
      */
-    fun createEsriSatelliteTileSource(): OnlineTileSourceBase {
-        // Clear any leftover Ion Authorization header to avoid rejected tile requests
-        Configuration.getInstance().additionalHttpRequestProperties.remove("Authorization")
-
-        return object : OnlineTileSourceBase(
-            "EsriWorldImagery",
-            0,
-            19,
-            256,
-            "",
-            arrayOf(
-                "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/",
-                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
-            ),
-            "Powered by Esri — Source: Esri, Maxar, Earthstar Geographics",
-            TileSourcePolicy(8, 0)
-        ) {
-            override fun getTileURLString(pMapTileIndex: Long): String {
-                val zoom = MapTileIndex.getZoom(pMapTileIndex)
-                val y = MapTileIndex.getY(pMapTileIndex)
-                val x = MapTileIndex.getX(pMapTileIndex)
-                // ArcGIS MapServer tile format is: {baseUrl}{z}/{y}/{x}
-                return "$baseUrl$zoom/$y/$x"
-            }
-        }
-    }
+    fun getEsriSatelliteUrl(): String = ESRI_SATELLITE_URL
 
     /**
-     * Clears tile authorization when returning to standard OSM or dark tiles.
+     * Clears tile authorization when returning to standard vector or dark tiles.
      */
     fun clearAuthHeader() {
-        Configuration.getInstance().additionalHttpRequestProperties.remove("Authorization")
         activeIonSessionToken = null
     }
 }

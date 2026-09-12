@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <!-- Red circle background -->
+    <path
+        android:fillColor="#EF4444"
+        android:pathData="M10,0 A10,10 0 1,0 10,20 A10,10 0 1,0 10,0 Z" />
+    <!-- White user icon -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,9 A3,3 0 1,0 10,3 A3,3 0 1,0 10,9 Z M5,16 C5,13.5 7.2,11.5 10,11.5 C12.8,11.5 15,13.5 15,16 Z" />
+</vector>

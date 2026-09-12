@@ -1,0 +1,427 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>Voyager Navigation - Live GNSS &amp; INS Guidance</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Font: Inter for high-legibility minimalist UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<!-- Custom Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+          },
+          colors: {
+            uber: {
+              black: '#000000',
+              charcoal: '#121212',
+              grayDark: '#262626',
+              grayMid: '#757575',
+              grayLight: '#E5E5E5',
+              graySubtle: '#F3F3F3',
+              grayBg: '#F6F6F6',
+              white: '#FFFFFF'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- Minimalist Monochromatic Map & Visual Styles -->
+<style data-purpose="map-styling">
+    .map-canvas {
+      background-color: #111111;
+    }
+    .road-major-casing {
+      stroke: #0A0A0A;
+      stroke-width: 22;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-major {
+      stroke: #222222;
+      stroke-width: 17;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-secondary-casing {
+      stroke: #0A0A0A;
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-secondary {
+      stroke: #1D1D1D;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-minor {
+      stroke: #181818;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .building-block {
+      fill: #161616;
+      stroke: #202020;
+      stroke-width: 1;
+    }
+    .park-block {
+      fill: #131313;
+      stroke: #1B1B1B;
+      stroke-width: 1;
+    }
+    .route-glow {
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .route-primary {
+      stroke: #FFFFFF;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .route-inner {
+      stroke: #000000;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .dead-reckoning-projected {
+      stroke: #888888;
+      stroke-width: 3.5;
+      stroke-dasharray: 6 5;
+      stroke-linecap: round;
+    }
+  </style>
+<style data-purpose="animations">
+    @keyframes pulse-vehicle {
+      0% { transform: scale(0.85); opacity: 0.6; }
+      50% { transform: scale(1.6); opacity: 0.05; }
+      100% { transform: scale(0.85); opacity: 0.6; }
+    }
+    .vehicle-halo {
+      animation: pulse-vehicle 2.2s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+      transform-origin: center;
+    }
+  </style>
+</head>
+<body class="h-full bg-black text-black antialiased font-sans flex justify-center items-center">
+<!-- BEGIN: MobileDeviceFrame (iPhone ~393x852 proportion) -->
+<main class="relative w-full max-w-[393px] h-[852px] max-h-screen bg-white overflow-hidden shadow-2xl flex flex-col select-none border border-neutral-800" data-purpose="voyager-navigation-screen">
+<!-- BEGIN: TopHeaderAndManeuverGuidance (Uber-style solid black header) -->
+<header class="bg-black text-white pt-2 pb-4 px-4 z-30 flex-shrink-0" data-purpose="guidance-header">
+<!-- iOS Status Bar -->
+<div class="flex justify-between items-center text-xs font-semibold tracking-tight pt-1.5 pb-2 text-white/90" data-purpose="ios-status-bar">
+<!-- Clock & Location Services Active -->
+<div class="flex items-center space-x-1 pl-1">
+<span class="text-[14px] font-bold tracking-tight">9:41</span>
+<svg class="w-3.5 h-3.5 fill-white rotate-45 ml-0.5" viewBox="0 0 24 24">
+<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path>
+</svg>
+</div>
+<!-- Live Localization Mode & Confidence Pill in Header -->
+<div class="flex items-center bg-[#222222] border border-neutral-700 px-2.5 py-0.5 rounded-full space-x-1.5" data-purpose="status-header-pill">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+<span class="text-[11px] font-medium text-white tracking-normal">GNSS + IMU</span>
+<span class="text-neutral-500 text-[10px]">•</span>
+<span class="text-[10px] font-semibold text-neutral-300 uppercase tracking-wider">High Match</span>
+</div>
+<!-- Hardware Status Icons -->
+<div class="flex items-center space-x-1.5 pr-1">
+<!-- Cellular Signal Bars -->
+<svg class="w-3.5 h-3 fill-white" viewBox="0 0 24 24">
+<rect height="7" rx="1" width="3" x="2" y="14"></rect>
+<rect height="11" rx="1" width="3" x="7" y="10"></rect>
+<rect height="15" rx="1" width="3" x="12" y="6"></rect>
+<rect height="19" rx="1" width="3" x="17" y="2"></rect>
+</svg>
+<!-- Battery Icon -->
+<div class="flex items-center">
+<div class="w-5 h-2.5 border border-white/80 rounded-[3px] p-[1.5px] flex items-center">
+<div class="h-full w-full bg-white rounded-xs"></div>
+</div>
+<div class="w-0.5 h-1 bg-white/80 rounded-r-xs"></div>
+</div>
+</div>
+</div>
+<!-- Turn-by-Turn Maneuver Instruction Banner -->
+<div class="flex items-start space-x-3.5 pt-1.5">
+<!-- High-visibility Turn Icon -->
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-white text-black flex items-center justify-center mt-0.5" data-purpose="maneuver-icon">
+<svg class="w-7 h-7 text-black fill-current" viewBox="0 0 24 24">
+<!-- Sharp Turn Right maneuver arrow -->
+<path d="M16.59 13.09L15.17 11.67L18.76 8.09H9C6.79 8.09 5 9.88 5 12.09V19.09H7V12.09C7 10.99 7.9 10.09 9 10.09H18.76L15.17 6.5L16.59 5.09L22.59 11.09L16.59 13.09Z"></path>
+</svg>
+</div>
+<!-- Maneuver Distance & Street Name -->
+<div class="flex-1 min-w-0">
+<div class="flex items-baseline space-x-2">
+<span class="text-2xl font-bold tracking-tight text-white leading-tight">In 450 ft</span>
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white text-black uppercase tracking-wider">Next</span>
+</div>
+<h1 class="text-base font-semibold text-white truncate leading-snug mt-0.5">
+          Turn right onto Montgomery St
+        </h1>
+<div class="flex items-center justify-between mt-1"><p class="text-xs text-neutral-400 font-medium truncate">Then continue 0.8 mi on Columbus Ave</p><span class="flex-shrink-0 text-[10px] font-semibold text-neutral-300 bg-[#222222] border border-neutral-700 px-1.5 py-0.5 rounded ml-1">To: Sentinel Bldg</span></div>
+</div>
+</div>
+</header>
+<!-- END: TopHeaderAndManeuverGuidance -->
+<!-- BEGIN: Telemetry & Navigation HUD (Pure white Uber-style strip with hairline borders) -->
+<section class="relative bg-white z-20 border-b border-[#E5E5E5] px-4 py-2.5" data-purpose="telemetry-dashboard">
+<div class="grid grid-cols-4 divide-x divide-[#E5E5E5] items-center text-center">
+<!-- Speed & Limit -->
+<div class="px-1 text-left flex flex-col justify-center">
+<div class="flex items-baseline space-x-1">
+<span class="text-2xl font-black text-black tracking-tight leading-none">34</span>
+<span class="text-[11px] font-medium text-neutral-500">mph</span>
+</div>
+<div class="flex items-center space-x-1 mt-1">
+<span class="text-[9px] font-bold px-1 py-0.2 rounded border border-black bg-white text-black tracking-wider">35 LIMIT</span>
+</div>
+</div>
+<!-- Dead-Reckoning / Localization Status -->
+<div class="px-1 text-center">
+<span class="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Outage</span>
+<span class="text-sm font-bold text-black mt-0.5 block">0:00 <span class="text-[10px] font-normal text-neutral-400">(None)</span></span>
+<span class="text-[10px] font-semibold text-black">GNSS Lock</span>
+</div>
+<!-- Road Match Confidence -->
+<div class="px-1 text-center">
+<span class="block text-[10px] font-bold uppercase tracking-wider text-neutral-400">Road Match</span>
+<span class="text-sm font-bold text-black mt-0.5 block">98%</span>
+<span class="text-[10px] font-semibold text-neutral-600">High Match</span>
+</div>
+<!-- Distance & ETA -->
+<div class="px-1 text-right flex flex-col justify-center items-end"><div class="flex items-center space-x-1 justify-end"><svg class="w-3 h-3 text-black fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg><span class="text-base font-bold text-black tracking-tight leading-none">12 min</span></div><span class="text-[11px] font-semibold text-black mt-0.5 truncate max-w-full">Sentinel Bldg</span><span class="text-[9px] font-medium text-neutral-500">3.4 mi • 9:53 AM</span></div>
+</div>
+</section>
+<!-- END: Telemetry & Navigation HUD -->
+<!-- BEGIN: InteractiveTacticalMapViewport -->
+<section class="relative flex-1 w-full h-full overflow-hidden map-canvas" data-purpose="map-viewport">
+<svg class="absolute inset-0 w-full h-full select-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 400 620" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Radial Vehicle Halo Gradient (Monochrome white) -->
+<radialGradient cx="50%" cy="50%" id="vehicleHaloGrad" r="50%">
+<stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.3"></stop>
+<stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.08"></stop>
+<stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"></stop>
+</radialGradient>
+<!-- Waypoint Marker -->
+<g id="destination-flag">
+<circle cx="0" cy="0" fill="#000000" r="10" stroke="#FFFFFF" stroke-width="2.5"></circle>
+<circle cx="0" cy="0" fill="#FFFFFF" r="3.5"></circle>
+</g>
+</defs>
+<!-- City Building Parcels (Monochrome Charcoal Blocks) -->
+<polygon class="building-block" points="-40,-10 160,-90 120,80 -50,150"></polygon>
+<polygon class="building-block" points="160,-110 350,-190 310,40 130,100"></polygon>
+<polygon class="building-block" points="105,120 300,30 250,170 70,240"></polygon>
+<polygon class="building-block" points="50,260 220,180 180,310 10,370"></polygon>
+<polygon class="park-block" points="80,360 210,290 150,470 10,520"></polygon>
+<polygon class="building-block" points="210,310 430,200 360,420 160,490"></polygon>
+<polygon class="building-block" points="140,510 340,430 290,630 90,700"></polygon>
+<polygon class="building-block" points="-30,540 120,480 60,680 -70,730"></polygon>
+<!-- Minor Grid Streets -->
+<line class="road-minor" x1="-30" x2="310" y1="340" y2="190"></line>
+<line class="road-minor" x1="70" x2="260" y1="110" y2="200"></line>
+<line class="road-minor" x1="140" x2="360" y1="440" y2="320"></line>
+<line class="road-minor" x1="10" x2="300" y1="590" y2="440"></line>
+<!-- Secondary Avenues -->
+<line class="road-secondary-casing" x1="-40" x2="520" y1="90" y2="-150"></line>
+<line class="road-secondary" x1="-40" x2="520" y1="90" y2="-150"></line>
+<line class="road-secondary-casing" x1="-30" x2="520" y1="300" y2="30"></line>
+<line class="road-secondary" x1="-30" x2="520" y1="300" y2="30"></line>
+<line class="road-secondary-casing" x1="10" x2="550" y1="740" y2="470"></line>
+<line class="road-secondary" x1="10" x2="550" y1="740" y2="470"></line>
+<!-- Major Arterials (Montgomery & Market Street axis) -->
+<line class="road-major-casing" x1="-40" x2="530" y1="530" y2="260"></line>
+<line class="road-major" x1="-40" x2="530" y1="530" y2="260"></line>
+<line class="road-major-casing" x1="20" x2="440" y1="-70" y2="780"></line>
+<line class="road-major" x1="20" x2="440" y1="-70" y2="780"></line>
+<line class="road-major-casing" x1="360" x2="530" y1="-70" y2="170"></line>
+<line class="road-major" x1="360" x2="530" y1="-70" y2="170"></line>
+<!-- ACTIVE NAVIGATION ROUTE (Sleek monochrome white route trajectory) -->
+<g id="active-navigation-route">
+<!-- Route glow halo -->
+<path class="route-glow" d="M 50,560 L 195,300 L 250,200 L 370,140"></path>
+<!-- Pure White Route line -->
+<path class="route-primary" d="M 50,560 L 195,300 L 250,200 L 370,140"></path>
+<!-- Fine dark inner accent -->
+<path class="route-inner" d="M 50,560 L 195,300 L 250,200 L 370,140"></path>
+<!-- Dead-Reckoning continuation forecast / upcoming path -->
+<path class="dead-reckoning-projected" d="M 370,140 L 440,105"></path>
+</g>
+<!-- Destination Marker Ahead -->
+<use href="#destination-flag" x="370" y="140"></use><g id="destination-pin-callout" transform="translate(370, 140)"><circle r="16" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.8"></circle><rect x="-65" y="-34" width="130" height="22" rx="11" fill="#000000" stroke="#FFFFFF" stroke-width="1.5"></rect><text x="0" y="-19" fill="#FFFFFF" font-size="9" font-weight="700" letter-spacing="0.5" text-anchor="middle">DEST: COLUMBUS AVE</text><polygon points="0,-12 -4,-7 4,-7" fill="#000000"></polygon></g>
+<!-- Road & Cross Street Tactical Labels -->
+<text fill="#777777" font-size="10.5" font-weight="600" letter-spacing="0.4" transform="translate(145, 345) rotate(-30)">
+        SUTTER ST
+      </text>
+<text fill="#AAAAAA" font-size="11.5" font-weight="700" letter-spacing="0.5" transform="translate(230, 245) rotate(-31)">
+        MONTGOMERY ST
+      </text>
+<text fill="#555555" font-size="10" font-weight="600" letter-spacing="0.4" transform="translate(260, 410) rotate(58)">
+        POST ST
+      </text>
+<text fill="#555555" font-size="10.5" font-weight="600" letter-spacing="0.6" x="295" y="195">
+        MARKET ST
+      </text>
+<!-- LIVE DIRECTIONAL NAVIGATION VEHICLE PUCK (Monochrome Uber Style) -->
+<g data-purpose="vehicle-indicator" transform="translate(195, 300) rotate(-31)">
+<!-- Outer Animated Halo -->
+<circle class="vehicle-halo" cx="0" cy="0" fill="url(#vehicleHaloGrad)" r="32"></circle>
+<!-- Outer Precision Ring -->
+<circle cx="0" cy="0" fill="none" opacity="0.6" r="18" stroke="#FFFFFF" stroke-dasharray="3 2" stroke-width="1.5"></circle>
+<!-- Solid Black Center Disc with White Border -->
+<circle cx="0" cy="0" fill="#000000" filter="drop-shadow(0 2px 5px rgba(0,0,0,0.8))" r="13" stroke="#FFFFFF" stroke-width="2.5"></circle>
+<!-- Sleek White Directional Chevron Arrowhead -->
+<path d="M 0,-8.5 L 6.5,6.5 L 0,3.5 L -6.5,6.5 Z" fill="#FFFFFF"></path>
+</g>
+</svg>
+<!-- BEGIN: FloatingQuickActions (Monochrome Uber-Style Buttons) -->
+<aside class="absolute right-3.5 top-3 flex flex-col space-y-2.5 z-20" data-purpose="floating-quick-actions">
+<!-- Recenter Map Button -->
+<button aria-label="Recenter Map" class="w-11 h-11 bg-white rounded-full border border-[#E5E5E5] flex items-center justify-center text-black shadow-md active:scale-95 transition-transform hover:bg-[#F6F6F6]">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="7"></circle>
+<line x1="12" x2="12" y1="2" y2="5"></line>
+<line x1="12" x2="12" y1="19" y2="22"></line>
+<line x1="2" x2="5" y1="12" y2="12"></line>
+<line x1="19" x2="22" y1="12" y2="12"></line>
+</svg>
+</button>
+<!-- Audio Guidance / Mute Button -->
+<button aria-label="Audio Guidance Toggle" class="w-11 h-11 bg-white rounded-full border border-[#E5E5E5] flex items-center justify-center text-black shadow-md active:scale-95 transition-transform hover:bg-[#F6F6F6]">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+<path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+</svg>
+</button>
+<!-- North Bearing / Compass Reset -->
+<button aria-label="Reset Heading North" class="w-11 h-11 bg-white rounded-full border border-[#E5E5E5] flex items-center justify-center text-black shadow-md active:scale-95 transition-transform hover:bg-[#F6F6F6]">
+<div class="relative w-5 h-5 flex items-center justify-center">
+<svg class="w-4 h-4 text-black fill-current" viewBox="0 0 24 24">
+<polygon points="12 2 17 21 12 17 7 21"></polygon>
+</svg>
+</div>
+</button>
+<!-- Layer Toggle Button -->
+<button aria-label="Map Layers" class="w-11 h-11 bg-white rounded-full border border-[#E5E5E5] flex items-center justify-center text-black shadow-md active:scale-95 transition-transform hover:bg-[#F6F6F6]">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+<polyline points="2 17 12 22 22 17"></polyline>
+<polyline points="2 12 12 17 22 12"></polyline>
+</svg>
+</button>
+</aside>
+<!-- END: FloatingQuickActions -->
+<!-- Status Banner Pill: Monochromatic Stability Badge -->
+<div class="absolute left-3.5 top-3 z-20 flex items-center bg-white border border-[#E5E5E5] rounded-xl px-3 py-1.5 shadow-md space-x-2">
+<span class="w-2 h-2 rounded-full bg-black"></span>
+<div class="flex flex-col">
+<span class="text-[10px] font-bold uppercase tracking-wider text-black leading-none">Confidence: Stable</span>
+<span class="text-[9px] text-neutral-500 font-medium leading-none mt-0.5">Sensors fused &amp; verified</span>
+</div>
+</div>
+<!-- BEGIN: DriverControlsBottomSheet (Uber Minimalist Sheet) -->
+<section class="absolute bottom-0 inset-x-0 bg-white rounded-t-2xl border-t border-[#E5E5E5] shadow-[0_-8px_24px_rgba(0,0,0,0.08)] z-30 pt-2 pb-5 px-4" data-purpose="driver-controls-bottom-sheet">
+<!-- Drag Pill Handle -->
+<div class="flex justify-center mb-2.5">
+<div class="w-9 h-1 bg-[#E5E5E5] rounded-full"></div>
+</div>
+<!-- Header of Sheet -->
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[#E5E5E5]">
+<div class="flex items-center space-x-2">
+<h2 class="text-xs font-bold uppercase tracking-wider text-neutral-500">Driver Controls</h2>
+<span class="text-[10px] bg-black text-white font-medium px-2 py-0.5 rounded-full">Voyager Active</span>
+</div>
+<span class="text-xs text-neutral-400 font-medium">Auto-docked</span>
+</div><div class="bg-[#F6F6F6] rounded-xl p-2.5 border border-[#E5E5E5] mb-2.5"><div class="flex items-start space-x-2.5"><div class="flex flex-col items-center pt-1 flex-shrink-0"><div class="w-2.5 h-2.5 rounded-full border-2 border-black bg-white"></div><div class="w-0.5 h-6 bg-neutral-400 my-0.5"></div><div class="w-2.5 h-2.5 rounded-[2px] bg-black"></div></div><div class="flex-1 min-w-0"><div class="flex items-center justify-between"><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wider text-neutral-400 leading-none">Origin • Current</p><p class="text-xs font-semibold text-black truncate mt-0.5">Bush St &amp; Montgomery St</p></div><span class="text-[10px] font-medium text-neutral-500 flex-shrink-0">Started 9:41 AM</span></div><div class="h-[1px] bg-[#E5E5E5] my-1.5"></div><div class="flex items-center justify-between"><div class="min-w-0"><p class="text-[10px] font-bold uppercase tracking-wider text-neutral-400 leading-none">Destination</p><p class="text-xs font-bold text-black truncate mt-0.5">Columbus Tower / Sentinel Bldg</p><p class="text-[10px] text-neutral-500 font-medium">280 Columbus Ave • North Beach</p></div><button class="flex-shrink-0 text-[10px] font-bold border border-black bg-white text-black px-2 py-1 rounded hover:bg-neutral-100 active:scale-95 transition-all">+ Add Stop</button></div></div></div></div>
+<!-- Grid of Quick Driver Controls -->
+<div class="grid grid-cols-4 gap-2 mb-3" data-purpose="controls-grid">
+<!-- Recenter -->
+<button class="flex flex-col items-center justify-center p-2 rounded-xl bg-[#F6F6F6] hover:bg-[#EEEEEE] active:scale-95 border border-[#E5E5E5] transition-all">
+<svg class="w-5 h-5 text-black mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="7"></circle>
+<line x1="12" x2="12" y1="2" y2="5"></line>
+<line x1="12" x2="12" y1="19" y2="22"></line>
+<line x1="2" x2="5" y1="12" y2="12"></line>
+<line x1="19" x2="22" y1="12" y2="12"></line>
+</svg>
+<span class="text-[11px] font-semibold text-black">Recenter</span>
+</button>
+<!-- Route Overview -->
+<button class="flex flex-col items-center justify-center p-2 rounded-xl bg-[#F6F6F6] hover:bg-[#EEEEEE] active:scale-95 border border-[#E5E5E5] transition-all">
+<svg class="w-5 h-5 text-black mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="6" cy="19" r="3"></circle>
+<path d="M9 19h8.5a4.5 4.5 0 0 0 0-9H6"></path>
+<circle cx="18" cy="5" r="3"></circle>
+<path d="M12 5H6"></path>
+</svg>
+<span class="text-[11px] font-semibold text-black">Overview</span>
+</button>
+<!-- Map Layers -->
+<button class="flex flex-col items-center justify-center p-2 rounded-xl bg-[#F6F6F6] hover:bg-[#EEEEEE] active:scale-95 border border-[#E5E5E5] transition-all">
+<svg class="w-5 h-5 text-black mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+<polyline points="2 17 12 22 22 17"></polyline>
+<polyline points="2 12 12 17 22 12"></polyline>
+</svg>
+<span class="text-[11px] font-semibold text-black">Layers</span>
+</button>
+<!-- Sensor Status -->
+<button class="flex flex-col items-center justify-center p-2 rounded-xl bg-[#F6F6F6] hover:bg-[#EEEEEE] active:scale-95 border border-[#E5E5E5] transition-all">
+<div class="relative mb-1">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+</svg>
+<span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-black rounded-full ring-1 ring-white"></span>
+</div>
+<span class="text-[11px] font-semibold text-black">Sensors</span>
+</button>
+</div>
+<!-- Action Row: Report Issue & End Navigation (Uber-Style Minimalist Buttons) -->
+<div class="grid grid-cols-2 gap-2.5 pt-1">
+<!-- Report Position Issue -->
+<button class="py-2.5 px-3 rounded-xl bg-[#F6F6F6] hover:bg-[#EEEEEE] border border-[#E5E5E5] flex items-center justify-center space-x-2 active:scale-98 transition-all">
+<svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+<line x1="12" x2="12" y1="9" y2="13"></line>
+<line x1="12" x2="12.01" y1="17" y2="17"></line>
+</svg>
+<span class="text-xs font-semibold text-black">Report Position</span>
+</button>
+<!-- End Navigation (Solid Uber Black) -->
+<button class="py-2.5 px-3 rounded-xl bg-black hover:bg-neutral-900 flex items-center justify-center space-x-1.5 text-white font-bold text-xs tracking-tight active:scale-98 transition-all" data-purpose="end-navigation-button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+<span class="">End Navigation</span>
+</button>
+</div>
+<!-- iOS Home Indicator bar -->
+<div class="flex justify-center pt-3 pointer-events-none">
+<div class="w-32 h-1 bg-black/30 rounded-full"></div>
+</div>
+</section>
+<!-- END: DriverControlsBottomSheet -->
+</section>
+<!-- END: InteractiveTacticalMapViewport -->
+</main>
+<!-- END: MobileDeviceFrame -->
+
+
+</body></html>

@@ -75,6 +75,7 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
     // Outage Simulation
     private var isSimulatingOutage = false
     private var outageStartTimeMs = 0L
+    private var outageInitialSpeedMs = 0.0
 
     // Road Anomaly / Pothole Shock Detector
     private var prevShock = 0f
@@ -503,20 +504,37 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                               isGnssHealthy
             val gnssSpeedMps = if (isGnssValid) lastGpsSpeedMs else 0.0
 
-            // Stationary Desk Clamp (Tier 1 ZUPT):
-            // Locked if GNSS Doppler speed < 0.3 m/s, or IMU is resting on a desk (|a - g| < 0.35 and |gyro| < 0.08)
-            val imuStill = kotlin.math.abs(kotlin.math.sqrt((lastAx * lastAx + lastAy * lastAy + lastAz * lastAz).toDouble()) - 9.80665) < 0.35 &&
-                           kotlin.math.sqrt((lastGx * lastGx + lastGy * lastGy + lastGz * lastGz).toDouble()) < 0.08
-            val isStationary = (isGnssValid && gnssSpeedMps < 0.3) || imuStill || (!isGnssValid && hasRealFix && gnssSpeedMps < 0.3 && !isSimulatingOutage)
+            // Forward propulsion / drive detection:
+            // Hand swaying has oscillating acceleration and near-zero net forward push.
+            // A real vehicle acceleration produces sustained forward acceleration > 0.6 m/s^2.
+            val hasFwdDrive = effAccFwd > 0.6f || (isObdConnected && (lastObdSpeedKmh ?: 0.0) > 1.0)
+
+            // Stationary Desk & Hand-Hold Clamp (Tier 1 ZUPT):
+            // 1. Pedestrian mode: stationary if no steps detected
+            // 2. GNSS valid: stationary if GPS Doppler speed < 0.3 m/s
+            // 3. Outage active: if speed when outage began was < 0.8 m/s (stopped), vehicle stays stationary unless forward drive is applied
+            // 4. IMU resting: accelerometer near 1g (|a-g| < 1.0) and gyro < 0.6 rad/s (couch/desk/hand still/sway) with no forward drive
+            val accNorm = kotlin.math.sqrt((lastAx * lastAx + lastAy * lastAy + lastAz * lastAz).toDouble())
+            val gyroNorm = kotlin.math.sqrt((lastGx * lastGx + lastGy * lastGy + lastGz * lastGz).toDouble())
+            val isZeroSpeedInitial = isSimulatingOutage && outageInitialSpeedMs < 0.8 && (!isObdConnected || (lastObdSpeedKmh ?: 0.0) < 1.0)
+            val imuResting = kotlin.math.abs(accNorm - 9.80665) < 1.0 && gyroNorm < 0.6
+
+            // Process Pedestrian Dead Reckoning (PDR) step engine
+            val stepResult = pedestrianEngine.processSample(lastAx, lastAy, lastAz, System.currentTimeMillis())
+
+            val isStationary = when {
+                isPedestrianMode -> !stepResult.isStep && stepResult.cadenceSpm == 0
+                isGnssValid -> gnssSpeedMps < 0.3
+                isZeroSpeedInitial -> !hasFwdDrive
+                imuResting && !hasFwdDrive -> true
+                else -> (!isGnssValid && hasRealFix && gnssSpeedMps < 0.3 && !hasFwdDrive)
+            }
 
             val obdSpeedMs = if (isObdConnected && lastObdSpeedKmh != null) {
                 lastObdSpeedKmh!! / 3.6
             } else {
                 0.0
             }
-
-            // Process Pedestrian Dead Reckoning (PDR) step engine
-            val stepResult = pedestrianEngine.processSample(lastAx, lastAy, lastAz, System.currentTimeMillis())
 
             // Process epoch through Native C++ Dead-Reckoning Filter with 3-Tier Gated Speed
             val result = NativeBridge.nativeProcessImu(
@@ -569,12 +587,14 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 // 2. Pedestrian Mode -> step cadence × dynamic stride
                 // 3. GNSS Valid -> ground truth Doppler velocity (never inflated by VelocityNet)
                 // 4. OBD Connected -> wheel speed
-                // 5. DR Outage -> VelocityNet / drag coasting
+                // 5. Zero Initial Speed Outage -> 0.0 unless physical vehicle throttle / OBD active
+                // 6. DR Outage -> VelocityNet / drag coasting
                 val estSpeedMs = when {
                     isStationary -> 0.0
                     isPedestrianMode -> if (stepResult.cadenceSpm > 0) (stepResult.cadenceSpm / 60.0) * stepResult.strideLengthM else 0.0
                     isGnssValid -> gnssSpeedMps
                     isObdConnected && lastObdSpeedKmh != null -> lastObdSpeedKmh!! / 3.6
+                    isZeroSpeedInitial && !hasFwdDrive -> 0.0
                     else -> rawEstSpeedMs
                 }
 
@@ -594,13 +614,14 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                     else -> RoadEvent.NORMAL
                 }
 
-                val isPureDr = isSimulatingOutage || (System.currentTimeMillis() - lastGpsFixTimeMs > 45000L)
+                val gnssHealthCode = NativeBridge.nativeGetGnssHealthState()
+                val isPureDr = isSimulatingOutage || gnssHealthCode == 0 || (System.currentTimeMillis() - lastGpsFixTimeMs > 45000L)
                 val mode = if (isPureDr) NavigationMode.PURE_DR else NavigationMode.AIDED
                 val outageDur = if (isSimulatingOutage) (System.currentTimeMillis() - outageStartTimeMs) / 1000.0 else 0.0
 
-                // Base coordinates: Prioritize physical location fixes whenever available
-                val baseLat = if (!isSimulatingOutage && latestGpsLat != 0.0) latestGpsLat else estLat
-                val baseLon = if (!isSimulatingOutage && latestGpsLon != 0.0) latestGpsLon else estLon
+                // Base coordinates: Authoritative fused estimator output (estLat, estLon)
+                val baseLat = if (estLat != 0.0) estLat else latestGpsLat
+                val baseLon = if (estLon != 0.0) estLon else latestGpsLon
 
                 // Continuous compass yaw offset calibration against GNSS ground track when moving
                 if (isGnssValid && hasGpsBearing && estSpeedMs >= 1.5 && isCompassOffsetCalibrated && !hasHardwareMag) {
@@ -673,25 +694,34 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                     if (!isNaiveInitialized) {
                         naiveLat = activeSnappedLat
                         naiveLon = activeSnappedLon
-                        naiveSpeed = estSpeedMs
+                        naiveSpeed = if (outageInitialSpeedMs < 0.8) 0.0 else outageInitialSpeedMs
                         naiveHeading = activeSnappedHdg
                         outageDistanceTravelled = 0.0
                         isNaiveInitialized = true
                     }
 
-                    // Naive strapdown double-integration without NHC/ZUPT/Map constraints:
-                    // Raw accelerometer leaks gravity tilt and thermal bias, causing quadratic position divergence
-                    val rawAccNorm = (kotlin.math.sqrt((lastAx * lastAx + lastAy * lastAy + lastAz * lastAz).toDouble()) - 9.80665).toFloat()
-                    val naiveAccel = if (kotlin.math.abs(rawAccNorm) > 0.1f) rawAccNorm else 0.15f // slight bias drift
-                    naiveSpeed = (naiveSpeed + naiveAccel * dtSec).coerceAtLeast(0.0)
-                    naiveHeading = (naiveHeading + lastGz * (180.0 / Math.PI) * dtSec + 0.5 * dtSec) % 360.0 // leaks gyro bias
-                    if (naiveHeading < 0) naiveHeading += 360.0
+                    if (isStationary || estSpeedMs < 0.4) {
+                        // When stationary at desk/couch or stopped at a light:
+                        // FREEZE naive ghost at current vehicle position! Do not drift or shoot a line across the city!
+                        naiveSpeed = 0.0
+                        naiveLat = activeSnappedLat
+                        naiveLon = activeSnappedLon
+                    } else {
+                        // Only integrate naive drift when actually moving down the road
+                        val rawAccNorm = (kotlin.math.sqrt((lastAx * lastAx + lastAy * lastAy + lastAz * lastAz).toDouble()) - 9.80665).toFloat()
+                        val naiveAccel = if (kotlin.math.abs(rawAccNorm) > 0.2f) rawAccNorm else 0.0f
+                        naiveSpeed = (naiveSpeed + naiveAccel * dtSec - 0.05 * dtSec).coerceIn(0.0, 45.0)
+                        naiveHeading = (naiveHeading + lastGz * (180.0 / Math.PI) * dtSec + 0.5 * dtSec) % 360.0
+                        if (naiveHeading < 0) naiveHeading += 360.0
 
-                    val distStep = naiveSpeed * dtSec
-                    val latRad = Math.toRadians(naiveLat)
-                    naiveLat += (distStep * kotlin.math.cos(Math.toRadians(naiveHeading))) / 111132.954
-                    naiveLon += (distStep * kotlin.math.sin(Math.toRadians(naiveHeading))) / (111412.84 * kotlin.math.cos(latRad))
-                    outageDistanceTravelled += estSpeedMs * dtSec
+                        val distStep = naiveSpeed * dtSec
+                        val latRad = Math.toRadians(naiveLat)
+                        val dN = distStep * kotlin.math.cos(Math.toRadians(naiveHeading))
+                        val dE = distStep * kotlin.math.sin(Math.toRadians(naiveHeading))
+                        naiveLat += (dN / 6371000.0) * (180.0 / Math.PI)
+                        naiveLon += (dE / (6371000.0 * kotlin.math.cos(latRad))) * (180.0 / Math.PI)
+                        outageDistanceTravelled += estSpeedMs * dtSec
+                    }
                 } else {
                     isNaiveInitialized = false
                     naiveLat = 0.0
@@ -700,13 +730,13 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 }
 
                 // Live Drift calculation (Handbook §11: "drift X.X m over X m travelled — X.X%")
-                val driftM = if (isSimulatingOutage && isNaiveInitialized && naiveLat != 0.0) {
+                val driftM = if (isSimulatingOutage && isNaiveInitialized && naiveLat != 0.0 && outageDistanceTravelled >= 5.0) {
                     com.inav.navigation.mapmatching.RoadSegment.haversineM(activeLat, activeLon, naiveLat, naiveLon)
                 } else {
                     0.0
                 }
 
-                val driftPct = if (isSimulatingOutage && outageDistanceTravelled > 2.0) {
+                val driftPct = if (isSimulatingOutage && outageDistanceTravelled >= 5.0) {
                     (driftM / outageDistanceTravelled) * 100.0
                 } else {
                     0.0
@@ -715,8 +745,8 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 val routeProgress = routeManager.updateProgress(activeLat, activeLon, estSpeedMs)
 
                 val updatedState = NavigationState(
-                    latitude = if (isPedestrianMode) pdrLat else (if (!isSimulatingOutage && latestGpsLat != 0.0) latestGpsLat else estLat),
-                    longitude = if (isPedestrianMode) pdrLon else (if (!isSimulatingOutage && latestGpsLon != 0.0) latestGpsLon else estLon),
+                    latitude = if (isPedestrianMode) pdrLat else (if (estLat != 0.0) estLat else latestGpsLat),
+                    longitude = if (isPedestrianMode) pdrLon else (if (estLon != 0.0) estLon else latestGpsLon),
                     speedKmh = estSpeedMs * 3.6,
                     speedMs = estSpeedMs,
                     headingDeg = if (hasCompassReading) lastLiveCompassHeadingDeg.toDouble() else activeHeading,
@@ -841,14 +871,6 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
             if (s > 0) satCount = s
         }
 
-        // Distance from current filter estimate to detect location jump
-        val curLat = _navState.value.latitude
-        val curLon = _navState.value.longitude
-        val distToCur = if (curLat != 0.0 && curLon != 0.0) {
-            val dLat = (location.latitude - curLat) * 111132.954
-            val dLon = (location.longitude - curLon) * (111412.84 * kotlin.math.cos(Math.toRadians(curLat)))
-            kotlin.math.sqrt(dLat * dLat + dLon * dLon)
-        } else 999.0
 
         // Protection: If we already have a reliable fix (<35m) or manual pin, do not let coarse network/fused (>50m) corrupt position
         if (hasRealFix && lastGpsAccuracyM < 35.0f && location.accuracy > 50.0f) {
@@ -856,7 +878,9 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
             return
         }
 
-        if (!hasRealFix || distToCur > 15.0) {
+        val timestampNs = location.elapsedRealtimeNanos
+
+        if (!hasRealFix) {
             hasRealFix = true
             roadSnapper.reset()
             NativeBridge.nativeReset(
@@ -866,14 +890,17 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 if (hasGpsBearing) lastGpsBearingDeg else 0.0
             )
             roadNetworkManager.ensureRoadNetwork(location.latitude, location.longitude, scope)
-            Log.i(TAG, "Re-anchored filter to real physical fix (${location.provider}): ${location.latitude}, ${location.longitude}, acc=${location.accuracy}m")
+            Log.i(TAG, "Initialized filter origin to initial physical fix (${location.provider}): ${location.latitude}, ${location.longitude}, acc=${location.accuracy}m")
         } else {
-            // Continuous anchor to GPS while GPS is healthy
+            // Continuous fusion & reacquisition: route to C++ 7-state UKF via NativeBridge
+            // DO NOT call nativeReset() - UKF & health manager seamlessly handle reacquisition and gating
             NativeBridge.nativeUpdateGnss(
                 location.latitude,
                 location.longitude,
                 lastGpsSpeedMs,
-                if (hasGpsBearing) lastGpsBearingDeg else -1.0
+                if (hasGpsBearing) lastGpsBearingDeg else -1.0,
+                location.accuracy.toDouble(),
+                timestampNs
             )
 
             // Online RLS Scale Factor Adaptation (NotebookLM Method B)
@@ -888,17 +915,22 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
             }
         }
 
-        // Immediately update state so UI reacts instantly to physical location fix
-        if (!isSimulatingOutage) {
-            _navState.value = _navState.value.copy(
-                latitude = location.latitude,
-                longitude = location.longitude,
-                gnssAccuracyM = location.accuracy,
-                satellitesInView = satCount,
-                satellitesUsed = minOf(satCount, 14),
-                gnssFixType = if (location.provider == LocationManager.GPS_PROVIDER) "GNSS Hardware Fix" else "Network / Fused Fix (${location.provider})"
-            )
+        // Update GNSS diagnostics telemetry without bypassing the fused estimator output
+        val healthCode = NativeBridge.nativeGetGnssHealthState()
+        val healthName = when (healthCode) {
+            0 -> "PURE_DR"
+            1 -> "QUARANTINE"
+            2 -> "AIDED"
+            3 -> "DEGRADED"
+            else -> "UNKNOWN"
         }
+
+        _navState.value = _navState.value.copy(
+            gnssAccuracyM = location.accuracy,
+            satellitesInView = satCount,
+            satellitesUsed = minOf(satCount, 14),
+            gnssFixType = "${if (location.provider == LocationManager.GPS_PROVIDER) "GNSS Hardware Fix" else "Network Fix"} [$healthName]"
+        )
     }
 
     override fun onLocationChanged(locations: List<Location>) {
@@ -947,10 +979,12 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
         isSimulatingOutage = enable
         if (enable) {
             outageStartTimeMs = System.currentTimeMillis()
+            outageInitialSpeedMs = if (lastGpsSpeedMs > 0.5) lastGpsSpeedMs else 0.0
             isNaiveInitialized = false
             isReacquiring = false
-            Log.w(TAG, "GNSS Outage Simulation ENABLED -> Switched to PURE_DR")
+            Log.w(TAG, "GNSS Outage Simulation ENABLED -> Switched to PURE_DR (initial speed: ${outageInitialSpeedMs} m/s)")
         } else {
+            outageInitialSpeedMs = 0.0
             isReacquiring = true
             quarantineCount = 0
             reacquisitionStartTimeMs = System.currentTimeMillis()

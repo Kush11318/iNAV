@@ -64,8 +64,10 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
 
-    // OpenStreetMap library for offline/online mapping
-    implementation 'org.osmdroid:osmdroid-android:6.1.18'
+    // MapLibre GL Native — GPU-accelerated vector tile map engine (Vulkan backend)
+    implementation 'org.maplibre.gl:android-sdk:11.5.2'
+    implementation 'org.maplibre.gl:android-plugin-annotation-v9:3.0.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-gestures:0.7.0'
 
     // Microsoft ONNX Runtime Mobile
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.17.0'

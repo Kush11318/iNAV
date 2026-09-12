@@ -1,0 +1,218 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Voyager - Sensor Setup</title>
+<!-- Tailwind CSS CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            voyager: {
+              bg: '#F6F8F7',
+              surface: '#FFFFFF',
+              border: '#E3E8E5',
+              primary: '#14221F',
+              secondary: '#66716D',
+              teal: '#176B63',
+              'teal-tint': '#E8F4F2',
+              'teal-dark': '#104F49',
+              amber: '#B78032',
+              'amber-tint': '#FDF8ED',
+              emerald: '#2E7D32'
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'SF Pro Display', 'Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom CSS Styles -->
+<style data-purpose="animations">
+    @keyframes subtlePulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.04); opacity: 1; }
+    }
+    @keyframes guideGaze {
+      0%, 100% { opacity: 0.35; transform: translateY(0); }
+      50% { opacity: 0.75; transform: translateY(-3px); }
+    }
+    .pulse-alignment {
+      animation: subtlePulse 2.8s ease-in-out infinite;
+    }
+    .alignment-vector {
+      animation: guideGaze 2.2s ease-in-out infinite;
+    }
+  </style>
+<style data-purpose="layout-tweaks">
+    /* Native iOS app feel: disable callout & user selection */
+    body {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior-y: none;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+  </style>
+<!-- END: Custom CSS Styles -->
+</head>
+<body class="bg-voyager-bg text-voyager-primary antialiased font-sans flex justify-center min-h-screen selection:bg-voyager-teal selection:text-white">
+<!-- BEGIN: Device Viewport Wrapper -->
+<div class="w-full max-w-md min-h-screen bg-voyager-bg flex flex-col justify-between relative px-5 pt-3 pb-7 overflow-x-hidden shadow-2xl">
+<!-- BEGIN: TopBar -->
+<header class="w-full pt-3 pb-2 flex items-center justify-between" data-purpose="top-navigation">
+<!-- Left: Dismiss action -->
+<button aria-label="Dismiss setup" class="text-[15px] font-medium text-voyager-secondary hover:text-voyager-primary transition-colors py-1.5 pr-2 focus:outline-none focus:ring-0 active:opacity-60" type="button">
+        Done
+      </button>
+<!-- Center: Title -->
+<div class="text-center">
+<h1 class="text-[15px] font-semibold text-voyager-primary tracking-tight">Sensor Setup</h1>
+</div>
+<!-- Right: Step Progress Pill -->
+<div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-voyager-teal-tint text-voyager-teal text-xs font-semibold tracking-wide" data-purpose="stage-pill">
+<span>1 of 3</span>
+</div>
+</header>
+<!-- END: TopBar -->
+<!-- BEGIN: StageTracker -->
+<!-- Sleek 3-stage segmented stepper -->
+<section aria-label="Calibration stages" class="mt-2 mb-3" data-purpose="stage-tracker">
+<div class="grid grid-cols-3 gap-2">
+<!-- Step 1: Active -->
+<div class="flex flex-col gap-1.5">
+<div class="h-1 rounded-full bg-voyager-teal transition-all duration-300"></div>
+<span class="text-[11px] font-semibold text-voyager-teal truncate tracking-tight">1. Phone orientation</span>
+</div>
+<!-- Step 2: Upcoming -->
+<div class="flex flex-col gap-1.5">
+<div class="h-1 rounded-full bg-voyager-border"></div>
+<span class="text-[11px] font-medium text-voyager-secondary/70 truncate tracking-tight">2. Vehicle direction</span>
+</div>
+<!-- Step 3: Upcoming -->
+<div class="flex flex-col gap-1.5">
+<div class="h-1 rounded-full bg-voyager-border"></div>
+<span class="text-[11px] font-medium text-voyager-secondary/70 truncate tracking-tight">3. Motion verification</span>
+</div>
+</div>
+</section>
+<!-- END: StageTracker -->
+<!-- BEGIN: CenteredHero -->
+<main class="flex-1 flex flex-col items-center justify-center py-2" data-purpose="hero-section">
+<!-- Minimal Phone & Road Perspective Alignment Graphic -->
+<div class="relative w-full max-w-[260px] h-[210px] flex items-center justify-center mb-5" data-purpose="alignment-graphic">
+<!-- Subtle road perspective and dashboard horizon lines -->
+<svg aria-hidden="true" class="absolute inset-0 w-full h-full" fill="none" viewBox="0 0 260 210" xmlns="http://www.w3.org/2000/svg">
+<!-- Horizon guide line -->
+<line stroke="#E3E8E5" stroke-dasharray="3 3" stroke-width="1.2" x1="20" x2="240" y1="95" y2="95"></line>
+<!-- Road convergence perspective -->
+<path d="M40 190L112 95M220 190L148 95" stroke="#E3E8E5" stroke-linecap="round" stroke-width="1.5"></path>
+<!-- Central road guide / travel direction marker -->
+<path class="alignment-vector" d="M130 190L130 115" stroke="#176B63" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2"></path>
+<!-- Forward direction target chevron -->
+<path class="alignment-vector" d="M124 110L130 102L136 110" stroke="#176B63" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<!-- Left and right lateral calibration guidance vectors -->
+<path d="M72 135L60 135M65 130L60 135L65 140" opacity="0.65" stroke="#66716D" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+<path d="M188 135L200 135M195 130L200 135L195 140" opacity="0.65" stroke="#66716D" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+</svg>
+<!-- Smartphone Silhouette with Mounting Bracket -->
+<div class="relative z-10 flex flex-col items-center pulse-alignment">
+<!-- Smartphone body -->
+<div class="w-[74px] h-[134px] rounded-[18px] bg-voyager-surface border-[2.5px] border-voyager-primary shadow-[0_10px_25px_-5px_rgba(20,34,31,0.12)] p-1.5 flex flex-col justify-between items-center relative">
+<!-- Dynamic island / speaker receiver notch -->
+<div class="w-5 h-1.5 bg-voyager-primary rounded-full mt-0.5"></div>
+<!-- Phone screen alignment target display -->
+<div class="w-full flex-1 my-1 rounded-[12px] bg-gradient-to-b from-voyager-teal-tint/40 to-white flex flex-col items-center justify-center border border-voyager-teal/15">
+<!-- Calibrating reticle circle -->
+<div class="w-7 h-7 rounded-full border border-voyager-teal/40 flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-voyager-teal"></div>
+</div>
+<span class="text-[8px] font-bold tracking-wider text-voyager-teal mt-1 uppercase">Facing Road</span>
+</div>
+<!-- Home indicator bar -->
+<div class="w-6 h-1 bg-voyager-primary/40 rounded-full mb-0.5"></div>
+</div>
+<!-- Minimal dashboard cradle clamp base -->
+<div class="w-10 h-2 bg-voyager-border rounded-b-md -mt-0.5 shadow-sm border border-t-0 border-voyager-secondary/20"></div>
+</div>
+</div>
+<!-- Core Heading & Instructions -->
+<div class="text-center px-2">
+<h2 class="text-[23px] font-bold tracking-tight text-voyager-primary leading-tight mb-2.5">
+          Align your phone with the road
+        </h2>
+<p class="text-[14px] text-voyager-secondary leading-relaxed max-w-[290px] mx-auto">
+          Keep the vehicle stationary and point the phone in the direction of travel.
+        </p>
+</div>
+<!-- BEGIN: PreviewReadinessCard -->
+<!-- Micro-card previewing readiness state -->
+<div class="mt-4 w-full bg-voyager-surface rounded-2xl p-3 border border-voyager-border shadow-[0_2px_8px_rgba(0,0,0,0.02)]" data-purpose="readiness-preview">
+<div class="flex items-center gap-2 text-left">
+<!-- Readiness icon -->
+<div class="w-6 h-6 rounded-full bg-voyager-teal-tint flex items-center justify-center shrink-0">
+<svg class="w-3.5 h-3.5 text-voyager-teal" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+<path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</div>
+<!-- Readiness copy -->
+<div class="text-[11px] leading-snug">
+<span class="font-semibold text-voyager-primary">Alignment complete</span>
+<span class="text-voyager-secondary"> • Phone orientation confidence: <span class="text-voyager-teal font-medium">High</span> • Ready for navigation</span>
+</div>
+</div>
+</div>
+<!-- END: PreviewReadinessCard -->
+</main>
+<!-- END: CenteredHero -->
+<!-- BEGIN: FooterControls -->
+<footer class="w-full flex flex-col gap-3 pt-2" data-purpose="footer-actions">
+<!-- BEGIN: SensorHealthModule -->
+<section aria-label="Sensor Status" class="bg-voyager-surface rounded-2xl px-3.5 py-2.5 border border-voyager-border" data-purpose="sensor-health">
+<div class="flex items-center justify-between mb-1.5">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-voyager-secondary">Sensor Status</span>
+<span class="text-[10px] text-voyager-secondary/80 font-medium">Automotive telemetry</span>
+</div>
+<!-- 3 Glanceable status items with dots -->
+<div class="grid grid-cols-3 gap-2 pt-0.5 border-t border-voyager-border/60">
+<!-- Accelerometer: Ready -->
+<div class="flex items-center gap-1.5 py-0.5">
+<span class="w-2 h-2 rounded-full bg-voyager-teal shrink-0"></span>
+<span class="text-xs text-voyager-primary font-medium truncate">Accelerometer: <span class="text-voyager-secondary font-normal">Ready</span></span>
+</div>
+<!-- Gyroscope: Ready -->
+<div class="flex items-center gap-1.5 py-0.5">
+<span class="w-2 h-2 rounded-full bg-voyager-teal shrink-0"></span>
+<span class="text-xs text-voyager-primary font-medium truncate">Gyroscope: <span class="text-voyager-secondary font-normal">Ready</span></span>
+</div>
+<!-- Compass: Calibrating (Amber) -->
+<div class="flex items-center gap-1.5 py-0.5">
+<span class="w-2 h-2 rounded-full bg-voyager-amber animate-pulse shrink-0"></span>
+<span class="text-xs text-voyager-primary font-medium truncate">Compass: <span class="text-voyager-amber font-medium">Calibrating</span></span>
+</div>
+</div>
+</section>
+<!-- END: SensorHealthModule -->
+<!-- Buttons Group -->
+<div class="flex flex-col gap-2 pt-1" data-purpose="action-buttons">
+<!-- Primary Action -->
+<button class="w-full h-13 py-3.5 px-4 bg-voyager-teal hover:bg-voyager-teal-dark active:scale-[0.99] text-white text-[15px] font-semibold rounded-[16px] shadow-sm transition duration-150 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-voyager-teal/40" type="button">
+<span>Begin calibration</span>
+<svg class="w-4 h-4 opacity-80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+<path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Secondary Action -->
+<button class="w-full py-2.5 text-center text-voyager-secondary hover:text-voyager-primary active:opacity-70 text-[14px] font-medium transition duration-150 focus:outline-none" type="button">
+          Calibrate later
+        </button>
+</div>
+</footer>
+<!-- END: FooterControls -->
+</div>
+<!-- END: Device Viewport Wrapper -->
+</body></html>

@@ -23,9 +23,11 @@ from eval.score import score_outage_segment, record_instance_leaderboard
 from eval.baseline import run_strapdown_baseline, run_constant_velocity_baseline, local_xy_to_latlon
 from modules.alignment import AlignmentEngine
 from modules.ukf import UKFNavigationFilter
+from modules.gnss_health import GnssHealthManager, GnssHealthState
+from modules.sensor_types import GnssSample, GnssValidity
 from modules.esekf import ESEKFNavigationFilter
 from modules.velocity_net import VelocityNetPredictor
-from modules.map_matcher import HMMMapMatcher, RoadSegment
+from modules.map_matcher import FixedLagHMMMapMatcher, RoadGraph, RoadSegment, load_road_graph_from_osm_json
 
 logging.basicConfig(
     level=logging.INFO,
@@ -137,11 +139,13 @@ def run_inav_ukf_pipeline(
     predictor: Optional[VelocityNetPredictor] = None,
     alignment: Optional[AlignmentEngine] = None,
     k_scale: float = 1.0,
-    dt: float = config.TARGET_DT
+    dt: float = config.TARGET_DT,
+    feed_gnss: bool = True,
+    map_matcher: Optional[FixedLagHMMMapMatcher] = None
 ):
     """
     iNAV Hybrid Navigation Filter:
-    Auto-alignment -> VelocityNet Displacement -> UKF Fusion with NHC & ZUPT.
+    Auto-alignment -> VelocityNet Displacement -> UKF Fusion with NHC & ZUPT + GNSS Health Fusion.
     """
     n = len(df_outage)
     if n == 0:
@@ -161,13 +165,19 @@ def run_inav_ukf_pipeline(
         alignment.calibrate_static(acc_raw[:calib_samples], gyro_raw[:calib_samples])
         alignment.calibrate_dynamic(acc_raw[:calib_samples], gyro_raw[:calib_samples])
 
-    # Initialize UKF filter
+    # Initialize UKF filter and GNSS Health Manager
     ukf = UKFNavigationFilter(dt=dt)
     ukf.initialize(
         init_lat=init_lat,
         init_lon=init_lon,
         init_speed_ms=init_speed_ms,
         init_heading_rad=np.radians(init_heading_deg)
+    )
+    health_mgr = GnssHealthManager()
+
+    has_gnss_cols = (
+        config.COL_GPS_LAT in df_outage.columns and
+        config.COL_GPS_LON in df_outage.columns
     )
 
     est_pN = np.zeros(n)
@@ -183,8 +193,65 @@ def run_inav_ukf_pipeline(
         w_b = gyro_raw[k]
         a_v, w_v = alignment.transform_imu(a_b, w_b)
 
+        # Dynamic dt calculation with validation
+        if "timestamp_ns" in df_outage.columns:
+            if k > 0:
+                dt_k = (df_outage["timestamp_ns"].iloc[k] - df_outage["timestamp_ns"].iloc[k - 1]) * 1e-9
+            else:
+                dt_k = dt
+        elif config.COL_TIME in df_outage.columns:
+            if k > 0:
+                dt_k = float(df_outage[config.COL_TIME].iloc[k] - df_outage[config.COL_TIME].iloc[k - 1])
+            else:
+                dt_k = dt
+        else:
+            dt_k = dt
+
+        # Reject negative, duplicate, or unreasonable gaps (> 0.5s)
+        if dt_k <= 0.0 or dt_k > 0.5 or not math.isfinite(dt_k):
+            dt_k = dt
+
         # 2. Filter prediction step
-        ukf.predict(acc_fwd=a_v[0], gyro_yaw=w_v[2], dt=dt)
+        ukf.predict(acc_fwd=a_v[0], gyro_yaw=w_v[2], dt=dt_k)
+
+        # Monotonic timestamp for GNSS timeout & health checks
+        if "timestamp_ns" in df_outage.columns:
+            t_ns = int(df_outage["timestamp_ns"].iloc[k])
+        elif config.COL_TIME in df_outage.columns:
+            t_ns = int(float(df_outage[config.COL_TIME].iloc[k]) * 1e9)
+        else:
+            t_ns = int(k * dt * 1e9)
+
+        health_mgr.check_timeout(t_ns)
+
+        # GNSS Measurement update (active outside outages)
+        if feed_gnss and has_gnss_cols:
+            gnss_avail = True
+            if "gnss_available" in df_outage.columns:
+                gnss_avail = bool(df_outage["gnss_available"].iloc[k])
+            elif "is_outage" in df_outage.columns:
+                gnss_avail = not bool(df_outage["is_outage"].iloc[k])
+
+            if gnss_avail:
+                g_lat = df_outage[config.COL_GPS_LAT].iloc[k]
+                g_lon = df_outage[config.COL_GPS_LON].iloc[k]
+                if math.isfinite(g_lat) and math.isfinite(g_lon) and g_lat != 0.0:
+                    g_spd = float(df_outage[config.COL_GPS_SPEED_MS].iloc[k]) if config.COL_GPS_SPEED_MS in df_outage.columns else 0.0
+                    g_brg = float(df_outage[config.COL_GPS_BEARING].iloc[k]) if config.COL_GPS_BEARING in df_outage.columns else 0.0
+                    g_acc = float(df_outage[config.COL_GPS_ACCURACY].iloc[k]) if config.COL_GPS_ACCURACY in df_outage.columns else 3.0
+                    if not math.isfinite(g_acc) or g_acc <= 0.0:
+                        g_acc = 3.0
+
+                    sample = GnssSample(
+                        timestamp_ns=t_ns,
+                        latitude_deg=float(g_lat),
+                        longitude_deg=float(g_lon),
+                        speed_mps=float(g_spd) if math.isfinite(g_spd) else 0.0,
+                        bearing_deg=float(g_brg) if math.isfinite(g_brg) else 0.0,
+                        horizontal_accuracy_m=float(g_acc),
+                        validity=GnssValidity.BASIC_FIX_VALID
+                    )
+                    ukf.update_gnss_sample(sample, health_mgr)
 
         # Channels: acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z
         imu_sample = np.concatenate([a_b, w_b])
@@ -203,6 +270,61 @@ def run_inav_ukf_pipeline(
                 scaled_sigma = max(sigma * k_scale, 0.2)
                 ukf.update_velocity_net(delta_d_pred=scaled_d, sigma_pred=scaled_sigma, event_class=ev_class, window_dur=2.0)
 
+        # 4. Map Matching measurement update (Pillar 5)
+        if map_matcher is not None and (k % 5 == 0):
+            p_N_curr = float(ukf.x[0])
+            p_E_curr = float(ukf.x[1])
+            hdg_curr_deg = math.degrees(ukf.x[3]) % 360.0
+            spd_curr = float(ukf.x[2])
+            sigma_p = math.sqrt(max(0.01, float(max(ukf.P[0, 0], ukf.P[1, 1]))))
+
+            if map_matcher.graph.is_ref_set:
+                curr_lat, curr_lon = local_xy_to_latlon(p_E_curr, p_N_curr, init_lat, init_lon)
+                curr_lat, curr_lon = float(curr_lat), float(curr_lon)
+                if map_matcher.graph.is_in_bounds(curr_lat, curr_lon):
+                    p_graph = map_matcher.graph.latlon_to_local(curr_lat, curr_lon)
+                    match_res = map_matcher.match(
+                        point_xy=p_graph,
+                        heading_deg=hdg_curr_deg,
+                        speed_ms=spd_curr,
+                        travel_dist_m=max(spd_curr * 0.5, 0.05),
+                        sigma_pos_m=sigma_p,
+                        dt=0.5
+                    )
+                    if not match_res.is_off_road and match_res.confidence >= 0.25:
+                        snap_lat, snap_lon = map_matcher.graph.local_to_latlon(
+                            float(match_res.snapped_point[0]), float(match_res.snapped_point[1])
+                        )
+                        d_lat = math.radians(snap_lat - init_lat)
+                        d_lon = math.radians(snap_lon - init_lon)
+                        p_N_match = 6371000.0 * d_lat
+                        p_E_match = 6371000.0 * d_lon * math.cos(math.radians(init_lat))
+
+                        ukf.update_map_match(
+                            p_N_match=float(p_N_match),
+                            p_E_match=float(p_E_match),
+                            psi_road=float(match_res.road_heading_rad),
+                            confidence=float(match_res.confidence),
+                            is_heading_valid=bool(match_res.is_heading_valid)
+                        )
+            else:
+                match_res = map_matcher.match(
+                    point_xy=np.array([p_N_curr, p_E_curr]),
+                    heading_deg=hdg_curr_deg,
+                    speed_ms=spd_curr,
+                    travel_dist_m=max(spd_curr * 0.5, 0.05),
+                    sigma_pos_m=sigma_p,
+                    dt=0.5
+                )
+                if not match_res.is_off_road and match_res.confidence >= 0.25:
+                    ukf.update_map_match(
+                        p_N_match=float(match_res.snapped_point[0]),
+                        p_E_match=float(match_res.snapped_point[1]),
+                        psi_road=float(match_res.road_heading_rad),
+                        confidence=float(match_res.confidence),
+                        is_heading_valid=bool(match_res.is_heading_valid)
+                    )
+
         # Trim buffer to max 40 samples
         if len(window_buffer) > 40:
             window_buffer.pop(0)
@@ -212,6 +334,98 @@ def run_inav_ukf_pipeline(
         est_speed[k] = ukf.x[2]
 
     # Convert local North-East coordinates back to Lat/Lon
+    est_lat, est_lon = local_xy_to_latlon(est_pE, est_pN, init_lat, init_lon)
+    return est_lat, est_lon, est_speed
+
+
+def run_inav_cpp_kinematic_pipeline(
+    df_outage: pd.DataFrame,
+    init_lat: float,
+    init_lon: float,
+    init_speed_ms: float,
+    init_heading_deg: float,
+    predictor: Optional[VelocityNetPredictor] = None,
+    alignment: Optional[AlignmentEngine] = None,
+    k_scale: float = 1.0,
+    gyro_deadband: float = 0.0,
+    dt: float = config.TARGET_DT
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    C++ / Android Production Kinematic Filter Replay Engine (inav::DeadReckoningFilter).
+    Direct Python equivalent of cpp/include/inav_filter.hpp.
+    """
+    n = len(df_outage)
+    if n == 0:
+        return np.array([]), np.array([]), np.array([])
+
+    if predictor is None:
+        best_pt = config.MODELS_DIR / "velocity_net_best.pt"
+        predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
+
+    acc_raw = df_outage[[config.COL_ACC_X, config.COL_ACC_Y, config.COL_ACC_Z]].values
+    gyro_raw = df_outage[[config.COL_GYRO_X, config.COL_GYRO_Y, config.COL_GYRO_Z]].values
+
+    if alignment is None:
+        alignment = AlignmentEngine()
+        calib_samples = min(50, n)
+        alignment.calibrate_static(acc_raw[:calib_samples], gyro_raw[:calib_samples])
+        alignment.calibrate_dynamic(acc_raw[:calib_samples], gyro_raw[:calib_samples])
+
+    p_N = 0.0
+    p_E = 0.0
+    v = max(init_speed_ms, 0.0) if init_speed_ms >= 0.3 else 0.0
+    psi = math.radians(init_heading_deg)
+    bg = 0.0
+
+    est_pN = np.zeros(n)
+    est_pE = np.zeros(n)
+    est_speed = np.zeros(n)
+
+    window_buffer = []
+
+    for k in range(n):
+        a_b = acc_raw[k]
+        w_b = gyro_raw[k]
+        a_v, w_v = alignment.transform_imu(a_b, w_b)
+
+        # 1. Heading propagation
+        omega_corr = float(w_v[2] - bg)
+        if gyro_deadband > 0.0 and abs(omega_corr) < gyro_deadband:
+            omega_corr = 0.0
+        psi = (psi + omega_corr * dt) % (2.0 * math.pi)
+
+        # 2. Window inference
+        imu_sample = np.concatenate([a_b, w_b])
+        window_buffer.append(imu_sample)
+
+        if len(window_buffer) >= config.WINDOW_SIZE and (k % 5 == 0):
+            win_arr = np.ascontiguousarray(np.array(window_buffer[-config.WINDOW_SIZE:], dtype=np.float32))
+            pred_d, ev_class, sigma = predictor.predict(win_arr)
+
+            if ev_class == 0 or pred_d < 0.2:
+                v = 0.0
+                bg = 0.98 * bg + 0.02 * float(w_v[2])
+            else:
+                v_net = (pred_d * k_scale) / 2.0
+                base_var = max(((sigma * k_scale) / 2.0) ** 2, 0.04)
+                R_meas = base_var * 4.0 if ev_class == 2 else (base_var * 2.0 if ev_class == 3 else base_var)
+                P_vv = 0.25
+                K = P_vv / (P_vv + R_meas)
+                v = v + K * (v_net - v)
+                v = max(v, 0.0)
+
+        if len(window_buffer) > 40:
+            window_buffer.pop(0)
+
+        # Position step
+        displacement = v * dt
+        p_N += displacement * math.cos(psi)
+        p_E += displacement * math.sin(psi)
+
+        est_pN[k] = p_N
+        est_pE[k] = p_E
+        est_speed[k] = v
+
     est_lat, est_lon = local_xy_to_latlon(est_pE, est_pN, init_lat, init_lon)
     return est_lat, est_lon, est_speed
 
@@ -280,74 +494,12 @@ def estimate_pre_outage_gyro_bias(
     return float(np.clip(bg_est, -0.05, 0.05))
 
 
-def snap_trajectory_to_road_network(
-    p_lat: np.ndarray,
-    p_lon: np.ndarray,
-    df_sub: pd.DataFrame,
-    init_lat: float,
-    init_lon: float
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Snap dead-reckoning trajectory to local road network using HMMMapMatcher (Pillar 5).
-    """
-    if len(p_lat) < 2:
-        return p_lat, p_lon
-
-    lat_scale = 111139.0
-    lon_scale = 111139.0 * math.cos(math.radians(init_lat))
-
-    xs = (p_lon - init_lon) * lon_scale
-    ys = (p_lat - init_lat) * lat_scale
-
-    gt_lat = df_sub[config.COL_TRUE_LAT].values
-    gt_lon = df_sub[config.COL_TRUE_LON].values
-    gt_x = (gt_lon - init_lon) * lon_scale
-    gt_y = (gt_lat - init_lat) * lat_scale
-
-    road_pts = []
-    prev_pt = None
-    for gx, gy in zip(gt_x, gt_y):
-        if prev_pt is None or math.hypot(gx - prev_pt[0], gy - prev_pt[1]) >= 20.0:
-            road_pts.append((gx, gy))
-            prev_pt = (gx, gy)
-    if len(road_pts) >= 2 and road_pts[-1] != (gt_x[-1], gt_y[-1]):
-        road_pts.append((gt_x[-1], gt_y[-1]))
-
-    if len(road_pts) < 2:
-        return p_lat, p_lon
-
-    matcher = HMMMapMatcher(sigma_d=8.0, beta=10.0, max_search_radius_m=80.0)
-    matcher.add_road_polyline("corridor_way", road_pts)
-
-    snapped_lat = []
-    snapped_lon = []
-
-    for i in range(len(xs)):
-        pt = np.array([xs[i], ys[i]])
-        spd = float(df_sub[config.COL_TRUE_SPEED_MS].iloc[i]) if config.COL_TRUE_SPEED_MS in df_sub.columns else 15.0
-        delta_s = max(0.1, spd * config.TARGET_DT)
-
-        if i > 0:
-            dx = xs[i] - xs[i - 1]
-            dy = ys[i] - ys[i - 1]
-            hdg = math.degrees(math.atan2(dx, dy)) % 360.0
-        else:
-            hdg = 0.0
-
-        res = matcher.match(pt, hdg, spd, delta_s)
-        s_lon = init_lon + res.snapped_point[0] / lon_scale
-        s_lat = init_lat + res.snapped_point[1] / lat_scale
-        snapped_lat.append(s_lat)
-        snapped_lon.append(s_lon)
-
-    return np.array(snapped_lat), np.array(snapped_lon)
-
-
 def evaluate_run_outages(
     sync_parquet_path: Path,
     method: str = "inav_esekf",
     durations: List[int] = config.OUTAGE_DURATIONS_SEC,
-    predictor: Optional[object] = None
+    predictor: Optional[object] = None,
+    map_matcher: Optional[FixedLagHMMMapMatcher] = None
 ) -> List[Dict]:
     """
     Simulate blackouts on a synchronized run and evaluate dead-reckoning performance.
@@ -365,7 +517,10 @@ def evaluate_run_outages(
     k_calib = 1.0
     run_align = None
 
-    ai_methods = ["inav_ukf", "inav_ai_ukf_v1", "inav_esekf", "inav_esekf_snapped", "inav_snapped"]
+    ai_methods = [
+        "inav_ukf", "inav_ai_ukf_v1", "inav_esekf", "inav_esekf_snapped", "inav_snapped",
+        "inav_cpp", "inav_cpp_kinematic", "inav_cpp_core"
+    ]
     if predictor is None and method in ai_methods:
         best_pt = config.MODELS_DIR / "velocity_net_best.pt"
         predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
@@ -377,19 +532,19 @@ def evaluate_run_outages(
             logger.info(f"RLS Calibrated scale factor k={k_calib:.3f} for {sync_parquet_path.stem}")
 
             # Pre-calibrate run alignment using warmup acceleration & gyroscope
+            from modules.alignment import AlignmentState
             run_align = AlignmentEngine()
             acc_w = warmup[[config.COL_ACC_X, config.COL_ACC_Y, config.COL_ACC_Z]].values
             gyro_w = warmup[[config.COL_GYRO_X, config.COL_GYRO_Y, config.COL_GYRO_Z]].values
             mean_a = np.mean(acc_w, axis=0)
-            run_align.u_z_body = -mean_a / np.linalg.norm(mean_a)
-            z = run_align.u_z_body
-            ref = np.array([1.0, 0.0, 0.0]) if abs(z[0]) < 0.8 else np.array([0.0, 1.0, 0.0])
-            y = np.cross(z, ref)
+            u_z = -mean_a / np.linalg.norm(mean_a)
+            ref = np.array([1.0, 0.0, 0.0]) if abs(u_z[0]) < 0.8 else np.array([0.0, 1.0, 0.0])
+            y = np.cross(u_z, ref)
             y /= np.linalg.norm(y)
-            x = np.cross(y, z)
-            run_align.R_b_to_v = np.vstack([x, y, z])
-            run_align.static_calibrated = True
-            run_align.calibrate_dynamic(acc_w, gyro_w)
+            x = np.cross(y, u_z)
+            run_align.result.R_b_to_v = np.vstack([x, y, u_z])
+            run_align.result.state = AlignmentState.FULL_ALIGNED
+            run_align.result.confidence = 1.0
 
     for _, row in df_outages.iterrows():
         oid = int(row["outage_id"])
@@ -438,7 +593,17 @@ def evaluate_run_outages(
             cfg_name = "inav_ai_ukf_v1"
             p_lat, p_lon, _ = run_inav_ukf_pipeline(
                 df_sub, init_lat, init_lon, init_spd, init_hdg,
-                predictor=predictor, alignment=run_align, k_scale=active_k
+                predictor=predictor, alignment=run_align, k_scale=active_k,
+                map_matcher=None
+            )
+        elif method in ["inav_ukf_map", "inav_map_aided"]:
+            cfg_name = "inav_ukf_map"
+            if map_matcher is not None:
+                map_matcher.reset()
+            p_lat, p_lon, _ = run_inav_ukf_pipeline(
+                df_sub, init_lat, init_lon, init_spd, init_hdg,
+                predictor=predictor, alignment=run_align, k_scale=active_k,
+                map_matcher=map_matcher
             )
         elif method in ["inav_esekf", "inav_spectra_esekf", "inav_spectra_esekf_v2"]:
             cfg_name = "inav_esekf"
@@ -452,8 +617,11 @@ def evaluate_run_outages(
                 df_sub, init_lat, init_lon, init_spd, init_hdg,
                 predictor=predictor, alignment=run_align, k_scale=active_k
             )
-            p_lat, p_lon = snap_trajectory_to_road_network(
-                p_lat, p_lon, df_sub, init_lat, init_lon
+        elif method in ["inav_cpp", "inav_cpp_kinematic", "inav_cpp_core"]:
+            cfg_name = "inav_cpp_kinematic"
+            p_lat, p_lon, _ = run_inav_cpp_kinematic_pipeline(
+                df_sub, init_lat, init_lon, init_spd, init_hdg,
+                predictor=predictor, alignment=run_align, k_scale=active_k
             )
         else:
             raise ValueError(f"Unknown method: {method}")
@@ -498,15 +666,26 @@ def run_benchmark_suite(
 
     logger.info(f"Benchmarking {len(test_files)} test runs across methods: {methods}")
 
-    if any(m in ["inav_ukf", "inav_ai_ukf_v1"] for m in methods) and predictor is None:
+    if any(m in ["inav_ukf", "inav_ai_ukf_v1", "inav_ukf_map"] for m in methods) and predictor is None:
         best_pt = config.MODELS_DIR / "velocity_net_best.pt"
         predictor = VelocityNetPredictor(model_path=str(best_pt) if best_pt.exists() else None)
 
     all_scores = []
     for method in methods:
         method_scores = []
+        map_matcher = None
+        if method in ["inav_ukf_map", "inav_map_aided"]:
+            uk_osm = config.DATA_DIR / "osm_uk_test_roads.json"
+            assets_osm = config.BASE_DIR / "android" / "app" / "src" / "main" / "assets" / "osm_roads_cache.json"
+            if uk_osm.exists():
+                graph = load_road_graph_from_osm_json(str(uk_osm), ref_lat=52.20, ref_lon=-2.19)
+                map_matcher = FixedLagHMMMapMatcher(graph=graph)
+            elif assets_osm.exists():
+                graph = load_road_graph_from_osm_json(str(assets_osm), ref_lat=22.72, ref_lon=75.83)
+                map_matcher = FixedLagHMMMapMatcher(graph=graph)
+
         for f in test_files:
-            sc = evaluate_run_outages(f, method=method, predictor=predictor)
+            sc = evaluate_run_outages(f, method=method, predictor=predictor, map_matcher=map_matcher)
             method_scores.extend(sc)
 
         if not method_scores:
@@ -531,7 +710,7 @@ if __name__ == "__main__":
         "--method",
         type=str,
         default="all",
-        choices=["all", "strapdown", "constant_velocity", "inav_ukf", "inav_esekf"],
+        choices=["all", "strapdown", "constant_velocity", "inav_ukf", "inav_ukf_map", "inav_esekf", "inav_cpp_kinematic"],
         help="Specific method to evaluate or 'all'"
     )
     parser.add_argument(
@@ -542,6 +721,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    eval_methods = ["constant_velocity", "strapdown", "inav_ukf", "inav_esekf"] if args.method == "all" else [args.method]
+    eval_methods = ["constant_velocity", "strapdown", "inav_ukf", "inav_ukf_map", "inav_esekf", "inav_cpp_kinematic"] if args.method == "all" else [args.method]
     limit = args.max_runs if args.max_runs > 0 else None
     run_benchmark_suite(methods=eval_methods, test_runs_limit=limit)

@@ -39,4 +39,8 @@ else()
     # Standalone C++ verification executable
     add_executable(inav_demo src/main.cpp)
     target_link_libraries(inav_demo inav_core)
+
+    # Standalone 200 Hz Edge Engine CLI
+    add_executable(inav_edge_cli src/inav_edge_cli.cpp)
+    target_link_libraries(inav_edge_cli inav_core)
 endif()

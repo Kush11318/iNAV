@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Voyager Navigation - Dead Reckoning Mode</title>
+<!-- Tailwind CSS v3 with forms and container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            voyager: {
+              navy: '#0A111F',
+              navyCard: '#111C2E',
+              road: '#1E293B',
+              routeTeal: '#176B63',
+              routeGaze: '#1FCBB5',
+              charcoal: '#14221F',
+              slate: '#66716D',
+              amber: '#B78032',
+              amberLight: '#FEF3C7',
+              amberMuted: '#FFFBEB',
+              amberBorder: '#F59E0B',
+              borderLight: '#E3E8E5',
+              surface: '#FFFFFF',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'SF Pro Text', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          boxShadow: {
+            floating: '0 12px 36px -4px rgba(10, 17, 31, 0.35), 0 4px 12px rgba(0, 0, 0, 0.15)',
+            mapHud: '0 4px 20px -2px rgba(0, 0, 0, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-layout">
+    /* Custom pulsing animations for dead reckoning beacons & radar uncertainty */
+    @keyframes pulse-amber {
+      0%, 100% { transform: scale(1); opacity: 0.4; }
+      50% { transform: scale(1.18); opacity: 0.15; }
+    }
+    .dr-halo {
+      animation: pulse-amber 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    /* Smooth transition for details toggle */
+    .collapse-details {
+      transition: max-height 0.3s ease-out, opacity 0.25s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-black text-voyager-charcoal antialiased select-none font-sans overflow-hidden flex justify-center items-center min-h-screen">
+<!-- BEGIN: MobileDeviceFrame -->
+<div class="relative w-full max-w-[440px] h-[920px] max-h-screen bg-voyager-navy overflow-hidden flex flex-col shadow-2xl rounded-[44px] border-[6px] border-slate-900" data-purpose="device-viewport">
+<!-- BEGIN: iOSStatusBar -->
+<header class="absolute top-0 left-0 right-0 z-40 px-7 pt-3 pb-2 flex justify-between items-center text-white text-xs font-semibold tracking-tight" data-purpose="ios-status-bar">
+<span>9:41</span>
+<!-- Sensor Status Pill (Amber Dead Reckoning Active) -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-voyager-amber/20 border border-voyager-amber/40 text-amber-300 text-[11px] tracking-wide font-medium backdrop-blur-md">
+<span class="w-1.5 h-1.5 rounded-full bg-voyager-amber animate-pulse"></span>
+<span>DEAD RECKONING • SENSOR ESTIMATE</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<svg class="w-4 h-3 fill-current" viewBox="0 0 17 11">
+<path d="M1 9.5h1.5v-2H1v2zm4 0h1.5v-4H5v4zm4 0h1.5v-6H9v6zm4 0h1.5v-8H13v8zm4 0h1.5v-10H17v10z"></path>
+</svg>
+<div class="w-5 h-2.5 border border-white rounded-[3px] p-0.5 flex items-center">
+<div class="w-3 h-1.5 bg-white rounded-[1px]"></div>
+</div>
+</div>
+</header>
+<!-- END: iOSStatusBar -->
+<!-- BEGIN: TacticalMapCanvas -->
+<div class="absolute inset-0 z-0 bg-[#0A111F]" data-purpose="vector-tactical-map">
+<!-- SVG Vector Map Simulation with Montgomery St and Sutter St -->
+<svg class="w-full h-full object-cover" fill="none" viewBox="0 0 440 920" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="routeGradient" x1="0%" x2="50%" y1="100%" y2="0%">
+<stop offset="0%" stop-color="#1FCBB5"></stop>
+<stop offset="100%" stop-color="#176B63"></stop>
+</linearGradient>
+<linearGradient id="uncertaintyCone" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#B78032" stop-opacity="0.25"></stop>
+<stop offset="100%" stop-color="#B78032" stop-opacity="0.0"></stop>
+</linearGradient>
+<filter height="140%" id="glow" width="140%" x="-20%" y="-20%">
+<feGaussianBlur result="blur" stdDeviation="6"></feGaussianBlur>
+<feComposite in="SourceGraphic" in2="blur" operator="over"></feComposite>
+</filter>
+</defs>
+<!-- City Blocks / Building Footprints -->
+<path d="M -40 180 L 160 140 L 180 340 L -20 380 Z" fill="#111B2B" opacity="0.65"></path>
+<path d="M 240 120 L 480 80 L 500 290 L 260 320 Z" fill="#111C2E" opacity="0.8"></path>
+<path d="M -30 460 L 130 420 L 170 700 L 0 740 Z" fill="#0E1624" opacity="0.7"></path>
+<path d="M 230 410 L 460 360 L 490 680 L 260 720 Z" fill="#111C2E" opacity="0.8"></path>
+<!-- Secondary Street Grids -->
+<line stroke="#1E293B" stroke-linecap="round" stroke-width="16" x1="-50" x2="480" y1="260" y2="180"></line>
+<line stroke="#1E293B" stroke-linecap="round" stroke-width="22" x1="-30" x2="500" y1="580" y2="490"></line>
+<line stroke="#1E293B" stroke-width="14" x1="120" x2="60" y1="50" y2="880"></line>
+<line stroke="#1E293B" stroke-width="14" x1="380" x2="330" y1="60" y2="860"></line>
+<!-- Montgomery Street (Main Corridor) -->
+<path d="M 120 860 L 220 540 L 390 280 L 440 220" stroke="#1E293B" stroke-linecap="round" stroke-linejoin="round" stroke-width="38"></path>
+<!-- Active Route Corridor (Teal) -->
+<path d="M 120 860 L 220 540 L 390 280 L 440 220" opacity="0.85" stroke="url(#routeGradient)" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"></path>
+<path d="M 120 860 L 220 540 L 390 280 L 440 220" opacity="0.4" stroke="#A7F3D0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<!-- Street Labels -->
+<text fill="#4B5563" font-size="11" font-weight="700" letter-spacing="1.5" transform="rotate(-68 75 700)" x="75" y="700">SUTTER ST</text>
+<text fill="#64748B" font-size="12" font-weight="700" letter-spacing="2" transform="rotate(-57 210 470)" x="210" y="470">MONTGOMERY ST</text>
+<text fill="#475569" font-size="10" font-weight="700" letter-spacing="1" x="340" y="320">MARKET ST</text>
+<!-- Dead Reckoning Position & Uncertainty Area (Montgomery St - at (205, 580)) -->
+<!-- Uncertainty Corridor Cone (Projected path based on IMU/Wheel ticks) -->
+<path d="M 205 580 L 165 440 L 255 425 Z" fill="url(#uncertaintyCone)"></path>
+<line opacity="0.6" stroke="#B78032" stroke-dasharray="4 4" stroke-width="1.5" x1="205" x2="165" y1="580" y2="440"></line>
+<line opacity="0.6" stroke="#B78032" stroke-dasharray="4 4" stroke-width="1.5" x1="205" x2="255" y1="580" y2="425"></line>
+<!-- DR Dynamic Uncertainty Halo -->
+<circle class="dr-halo" cx="205" cy="580" fill="#B78032" r="32"></circle>
+<circle cx="205" cy="580" opacity="0.85" r="22" stroke="#B78032" stroke-dasharray="3 3" stroke-width="1.5"></circle>
+<!-- Vehicle Directional Chevron Marker -->
+<g transform="translate(205, 580) rotate(-32)">
+<!-- Outer Ring -->
+<circle cx="0" cy="0" fill="#14221F" r="18" stroke="#FFFFFF" stroke-width="2.5"></circle>
+<!-- Inner Heading Indicator -->
+<path d="M 0 -10 L 7 8 L 0 5 L -7 8 Z" fill="#1FCBB5"></path>
+</g>
+</svg>
+<!-- Floating Map Utility Buttons (Right Side) -->
+<div class="absolute right-4 top-[240px] flex flex-col gap-3 z-10" data-purpose="map-quick-controls">
+<button aria-label="Recenter Map" class="w-11 h-11 bg-voyager-surface/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-voyager-charcoal active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-voyager-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="7"></circle>
+<line x1="12" x2="12" y1="2" y2="5"></line>
+<line x1="12" x2="12" y1="19" y2="22"></line>
+<line x1="2" x2="5" y1="12" y2="12"></line>
+<line x1="19" x2="22" y1="12" y2="12"></line>
+</svg>
+</button>
+<button aria-label="Audio Guidance" class="w-11 h-11 bg-voyager-surface/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-voyager-charcoal active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-voyager-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+</svg>
+</button>
+<button aria-label="North Orientation" class="w-11 h-11 bg-voyager-surface/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-voyager-charcoal active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+<polygon points="12 3 17 19 12 15 7 19"></polygon>
+</svg>
+</button>
+<button aria-label="Map Layers" class="w-11 h-11 bg-voyager-surface/95 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center text-voyager-charcoal active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-voyager-charcoal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+<polyline points="2 17 12 22 22 17"></polyline>
+<polyline points="2 12 12 17 22 12"></polyline>
+</svg>
+</button>
+</div>
+<!-- Left Mode Badge on Map -->
+<div class="absolute left-4 top-[244px] z-10" data-purpose="sensor-fusion-badge">
+<div class="px-3 py-1.5 rounded-xl bg-voyager-navyCard/90 backdrop-blur-md border border-voyager-amber/40 shadow-lg flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-voyager-amber"></span>
+<div>
+<div class="text-[10px] font-bold tracking-wider uppercase text-voyager-amber">Mode: Inertial Fusion</div>
+<div class="text-[9px] text-slate-300 font-medium leading-none">IMU + Wheel Ticks Active</div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: TacticalMapCanvas -->
+<!-- BEGIN: TopManeuverHeader -->
+<header class="relative z-30 pt-11 px-3 pb-0" data-purpose="turn-by-turn-navigation-header">
+<!-- Active Maneuver Card -->
+<div class="bg-voyager-routeTeal text-white rounded-2xl p-4 shadow-mapHud flex items-center gap-3.5 border border-emerald-500/20">
+<!-- Turn Direction Icon -->
+<div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/15">
+<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.7" viewBox="0 0 24 24">
+<polyline points="15 14 20 9 15 4"></polyline>
+<path d="M4 20v-7a4 4 0 0 1 4-4h12"></path>
+</svg>
+</div>
+<!-- Maneuver Details -->
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-bold tracking-tight text-white">In 350 ft</span>
+<span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-white/20 text-white">Next</span>
+</div>
+<p class="text-sm font-semibold truncate text-emerald-50 leading-snug">Turn right onto Montgomery St</p>
+<p class="text-[11px] text-emerald-100/70 truncate">Then continue 0.8 mi on Columbus Ave</p>
+</div>
+</div>
+<!-- Telemetry Strip HUD -->
+<div class="mt-1.5 bg-voyager-surface rounded-xl px-4 py-2 shadow-md border border-voyager-borderLight flex items-center justify-between text-center">
+<!-- Speedometer -->
+<div class="flex items-baseline gap-1">
+<span class="text-xl font-extrabold text-voyager-charcoal leading-none">31</span>
+<span class="text-[10px] font-bold text-voyager-slate uppercase">mph</span>
+<span class="ml-1 text-[9px] font-semibold px-1 py-0.5 rounded bg-slate-100 text-voyager-slate border border-slate-200">35 LIMIT</span>
+</div>
+<!-- Road Matching -->
+<div class="border-l border-slate-200 pl-3">
+<div class="text-[9px] uppercase font-bold text-voyager-slate tracking-wider">Road Match</div>
+<div class="text-xs font-bold text-emerald-700">89% • Matched</div>
+</div>
+<!-- Outage Time -->
+<div class="border-l border-slate-200 pl-3">
+<div class="text-[9px] uppercase font-bold text-voyager-amber tracking-wider">Outage</div>
+<div class="text-xs font-bold text-voyager-amber">00:18 (IMU)</div>
+</div>
+<!-- ETA -->
+<div class="border-l border-slate-200 pl-3 text-right">
+<div class="text-xs font-extrabold text-voyager-charcoal leading-none">12 min</div>
+<div class="text-[10px] text-voyager-slate font-medium">3.4 mi • 9:53</div>
+</div>
+</div>
+</header>
+<!-- END: TopManeuverHeader -->
+<!-- BEGIN: FloatingReassuranceCard -->
+<section class="mt-auto relative z-30 px-3 pb-3" data-purpose="reassuring-transition-card">
+<div class="bg-voyager-surface rounded-[24px] shadow-floating border border-voyager-borderLight p-4 pt-3.5 backdrop-blur-sm flex flex-col gap-3">
+<!-- Grabber Handle -->
+<div class="w-10 h-1 bg-slate-200 rounded-full mx-auto -mt-1 mb-0.5"></div>
+<!-- Reassurance Header / Status Badge -->
+<div class="flex items-center justify-between">
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-voyager-amberMuted border border-voyager-amber/30 text-voyager-amber text-xs font-semibold">
+<!-- Calming Beacon / Non-red alert icon -->
+<svg class="w-4 h-4 text-voyager-amber flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24">
+<path d="M12 2a10 10 0 0 0-10 10c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69"></path>
+<path d="M12 12v-4"></path>
+<circle cx="12" cy="16" fill="currentColor" r="0.5"></circle>
+</svg>
+<span>GNSS signal unavailable</span>
+</div>
+<!-- Mode Pill -->
+<span class="text-[11px] font-bold uppercase tracking-wider text-voyager-routeTeal bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+            Dead Reckoning Active
+          </span>
+</div>
+<!-- Primary Calm Reassuring Headline -->
+<div>
+<h2 class="text-base font-bold text-voyager-charcoal tracking-tight leading-snug">
+            Voyager is continuing with dead reckoning
+          </h2>
+<p class="text-xs text-voyager-slate mt-0.5 leading-relaxed">
+            Your vehicle path is continuously calculated via internal motion sensors and road network geometry.
+          </p>
+</div>
+<!-- 3-Column Live Telemetry Grid -->
+<div class="grid grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-center" data-purpose="dead-reckoning-telemetry">
+<!-- Outage Duration -->
+<div class="flex flex-col items-center">
+<span class="text-[9px] uppercase font-bold tracking-wider text-voyager-slate">Outage Duration</span>
+<span class="text-sm font-bold text-voyager-charcoal font-mono mt-0.5">00:18</span>
+<span class="text-[9px] text-voyager-slate">Satellite sync pending</span>
+</div>
+<!-- Distance with DR -->
+<div class="flex flex-col items-center border-x border-slate-200 px-1">
+<span class="text-[9px] uppercase font-bold tracking-wider text-voyager-slate">Distance Est.</span>
+<span class="text-sm font-bold text-voyager-charcoal font-mono mt-0.5">164 m</span>
+<span class="text-[9px] text-voyager-slate">Wheel tick calibrated</span>
+</div>
+<!-- Confidence Level -->
+<div class="flex flex-col items-center">
+<span class="text-[9px] uppercase font-bold tracking-wider text-voyager-slate">Confidence</span>
+<span class="inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-voyager-amber border border-amber-300/40">
+              Medium
+            </span>
+<span class="text-[9px] text-voyager-slate">High map match</span>
+</div>
+</div>
+<!-- Re-Stabilization Preview / State Transition Accordion -->
+<div class="rounded-xl bg-[#F8FAFC] border border-slate-200 overflow-hidden" data-purpose="recovery-pipeline-preview">
+<button class="w-full px-3 py-2 text-left flex items-center justify-between text-xs font-semibold text-voyager-charcoal hover:bg-slate-100 transition-colors" id="toggleDetailsBtn">
+<div class="flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-voyager-routeTeal" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+</svg>
+<span>Automatic Return: Seamless Re-stabilization</span>
+</div>
+<svg class="w-4 h-4 text-voyager-slate transform transition-transform duration-200" fill="none" id="chevronIcon" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</button>
+<!-- Drawer Content showing blending pipeline steps -->
+<div class="collapse-details max-h-0 opacity-0 overflow-hidden px-3 pb-2.5 text-[11px] text-voyager-slate border-t border-slate-100" id="stabilizationDetails">
+<div class="pt-2 flex flex-col gap-1.5">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-voyager-amber"></div>
+<span>Phase 1: IMU &amp; Heading integration (Active now)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-slate-300"></div>
+<span>Phase 2: Kalman filter satellite &amp; motion blending</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+<span>Phase 3: Position stabilized &amp; lock confirmed</span>
+</div>
+<p class="text-[10px] text-slate-400 mt-1 italic">
+                No driver intervention is necessary. Guidance voice &amp; turns remain active.
+              </p>
+</div>
+</div>
+</div>
+<!-- Primary & Secondary Automotive Touch Action Buttons -->
+<div class="flex items-center gap-2.5 pt-0.5">
+<!-- Primary: Keep Navigating (Calm, Prominent) -->
+<button class="flex-1 py-3 px-4 bg-voyager-routeTeal hover:bg-[#12544e] active:scale-[0.98] transition-all rounded-xl text-white font-bold text-sm shadow-md flex items-center justify-center gap-2">
+<svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+<span>Keep navigating</span>
+</button>
+<!-- Secondary: Sensor Status Details / Diagnostics -->
+<button class="py-3 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 active:scale-[0.98] transition-all rounded-xl text-voyager-charcoal font-semibold text-xs flex items-center gap-1" id="viewDetailsBtn">
+<span>Sensors</span>
+<svg class="w-3.5 h-3.5 text-voyager-slate" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="1"></circle>
+<circle cx="19" cy="12" r="1"></circle>
+<circle cx="5" cy="12" r="1"></circle>
+</svg>
+</button>
+</div>
+</div>
+</section>
+<!-- END: FloatingReassuranceCard -->
+<!-- BEGIN: iOSHomeIndicator -->
+<div class="relative z-40 w-full pb-2 flex justify-center" data-purpose="home-indicator">
+<div class="w-32 h-1 bg-white/70 rounded-full"></div>
+</div>
+<!-- END: iOSHomeIndicator -->
+</div>
+<!-- END: MobileDeviceFrame -->
+<!-- BEGIN: InteractiveScripts -->
+<script data-purpose="interactive-card-toggle">
+    // Interactive toggling for the seamless re-stabilization details accordion
+    const toggleBtn = document.getElementById('toggleDetailsBtn');
+    const details = document.getElementById('stabilizationDetails');
+    const chevron = document.getElementById('chevronIcon');
+    let isExpanded = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        details.style.maxHeight = '140px';
+        details.style.opacity = '1';
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        details.style.maxHeight = '0px';
+        details.style.opacity = '0';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    // Simple feedback on secondary button
+    const viewDetailsBtn = document.getElementById('viewDetailsBtn');
+    viewDetailsBtn.addEventListener('click', () => {
+      toggleBtn.click();
+    });
+  </script>
+<!-- END: InteractiveScripts -->
+</body></html>

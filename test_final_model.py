@@ -115,7 +115,7 @@ if __name__ == "__main__":
         "--method",
         type=str,
         default="inav_esekf",
-        choices=["inav_esekf", "inav_esekf_snapped", "inav_ukf", "constant_velocity", "strapdown"],
+        choices=["inav_esekf", "inav_esekf_snapped", "inav_ukf", "inav_cpp_kinematic", "constant_velocity", "strapdown"],
         help="Dead reckoning navigation filter to execute"
     )
     parser.add_argument(

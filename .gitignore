@@ -57,6 +57,11 @@ data/processed/
 *.kml
 *.log
 *.apk
+*.dll
+*.exe
+*.o
+*.obj
+tests/test_cpp_alignment
 android/test_mission.kml
 android/ui.xml
 

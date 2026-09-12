@@ -6,6 +6,7 @@
 
 #include "Butterworth2to8Hz.hpp"
 #include "LevelingUtils.hpp"
+#include "inav_sensor_types.hpp"
 
 namespace inav {
 
@@ -41,7 +42,8 @@ public:
           butterworth_(20.0),
           gnss_speed_(0.0), is_gnss_healthy_(false),
           has_velocity_net_input_(false), velocity_net_speed_(0.0),
-          has_obd_speed_(false), obd_wheel_speed_(0.0) {}
+          has_obd_speed_(false), obd_wheel_speed_(0.0),
+          gyro_deadband_(0.0) {}
 
     void initialize(double init_lat, double init_lon, double init_speed_ms, double init_heading_deg) {
         ref_lat_ = init_lat;
@@ -122,6 +124,18 @@ public:
         return res;
     }
 
+    void set_gyro_deadband(double deadband_rads) {
+        gyro_deadband_ = std::max(0.0, deadband_rads);
+    }
+
+    /**
+     * @brief Classical 3-parameter predict overload for desktop/CLI engines
+     */
+    void predict(double acc_fwd, double gyro_yaw, double step_dt) {
+        (void)acc_fwd;
+        predict(step_dt, gyro_yaw, false, 0.0);
+    }
+
     /**
      * @brief Production-Grade Speed & Position Propagation
      * Replaces open-loop raw accelerometer integration with 3-tier gated speed propagation:
@@ -132,14 +146,14 @@ public:
     void predict(
         double step_dt,
         double gyro_yaw,
-        bool is_stationary_classified,
-        double imu_variance
+        bool is_stationary_classified = false,
+        double imu_variance = 0.0
     ) {
         if (!is_initialized_) return;
 
         // Heading propagation
         double omega_corr = gyro_yaw - bg_;
-        if (std::abs(omega_corr) < 0.02) {
+        if (gyro_deadband_ > 0.0 && std::abs(omega_corr) < gyro_deadband_) {
             omega_corr = 0.0;
         }
         psi_ += omega_corr * step_dt;
@@ -189,6 +203,15 @@ public:
         double displacement = v_ * step_dt;
         p_N_ += displacement * std::cos(psi_);
         p_E_ += displacement * std::sin(psi_);
+    }
+
+    /**
+     * @brief Canonical Sensor Interface Coexistence Overload.
+     * Consumes canonical ImuSample. In Phase 2, passes angular rate to existing filter.
+     * Note: Coordinate frame alignment from PHONE_BODY to VEHICLE_FRD is explicitly deferred to Phase 3.
+     */
+    void predict(const ImuSample& sample, double step_dt) {
+        predict(step_dt, sample.gyro_radps.z, sample.is_stationary, 0.0);
     }
 
     // VelocityNet learned displacement update
@@ -244,6 +267,15 @@ public:
         v_ = (gnss_speed_ < 0.3) ? 0.0 : gnss_speed_;
         if (heading_deg >= 0.0) {
             psi_ = heading_deg * (PI / 180.0);
+        }
+    }
+
+    /**
+     * @brief Canonical Sensor Interface Coexistence Overload for GNSS.
+     */
+    void update_gnss(const GnssSample& sample) {
+        if (sample.hasBasicFix()) {
+            update_gnss(sample.latitude_deg, sample.longitude_deg, sample.speed_mps, sample.bearing_deg);
         }
     }
 
@@ -303,6 +335,7 @@ private:
     double velocity_net_speed_;
     bool has_obd_speed_;
     double obd_wheel_speed_;
+    double gyro_deadband_{0.0};
 };
 
 } // namespace inav

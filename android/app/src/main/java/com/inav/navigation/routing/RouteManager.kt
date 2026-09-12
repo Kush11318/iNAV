@@ -8,10 +8,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.osmdroid.util.GeoPoint
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.math.*
+
+/**
+ * Lightweight GeoPoint representation replacing OsmDroid dependency.
+ */
+data class GeoPoint(val latitude: Double, val longitude: Double)
 
 data class RouteStep(
     val instruction: String,

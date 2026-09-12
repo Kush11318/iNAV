@@ -1,0 +1,342 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Voyager Navigation - Dead Reckoning Mode</title>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          boxShadow: {
+            card: '0 8px 30px rgba(0, 0, 0, 0.45)',
+            sheet: '0 -10px 40px rgba(0, 0, 0, 0.35)',
+            pill: '0 4px 14px rgba(0, 0, 0, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @keyframes pulse-halo {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.18); opacity: 0.1; }
+    }
+    .dr-halo {
+      transform-origin: 195px 440px;
+      animation: pulse-halo 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .details-body {
+      transition: max-height 0.25s ease-in-out, opacity 0.2s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-black text-white antialiased font-sans flex justify-center items-center min-h-screen p-0 m-0">
+<!-- BEGIN: Mobile Device Frame (iPhone 14/15 standard: 390px x 844px) -->
+<div class="relative w-[390px] h-[844px] max-w-full bg-black overflow-hidden flex flex-col select-none rounded-[48px] border-[6px] border-[#222222] shadow-2xl" data-purpose="device-viewport">
+<!-- BEGIN: Dynamic Island & iOS Status Bar -->
+<header class="absolute top-0 inset-x-0 z-50 pt-3 px-6 flex justify-between items-center text-white" data-purpose="ios-status-bar">
+<!-- Time -->
+<span class="text-[14px] font-semibold tracking-tight w-12 text-left">9:41</span>
+<!-- Dynamic Island Pill -->
+<div class="h-7 px-3 bg-black rounded-full border border-neutral-800 flex items-center gap-2 shadow-pill">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+<span class="text-[9px] font-mono font-bold tracking-widest text-white uppercase">DEAD RECKONING • SENSOR ESTIMATE</span>
+</div>
+<!-- System Icons -->
+<div class="flex items-center space-x-1.5 w-12 justify-end text-white">
+<!-- Cellular -->
+<svg class="w-3.5 h-3 fill-current" viewBox="0 0 17 11">
+<rect height="3" rx="0.5" width="2.5" x="0" y="8"></rect>
+<rect height="5" rx="0.5" width="2.5" x="4" y="6"></rect>
+<rect height="7" rx="0.5" width="2.5" x="8" y="4"></rect>
+<rect height="10" rx="0.5" width="2.5" x="12" y="1"></rect>
+</svg>
+<!-- Battery -->
+<div class="w-5 h-2.5 border border-white rounded-[3px] p-[1px] flex items-center">
+<div class="w-3 h-full bg-white rounded-[1px]"></div>
+</div>
+</div>
+</header>
+<!-- END: Dynamic Island & iOS Status Bar -->
+<!-- BEGIN: Vector Tactical Map Viewport -->
+<div class="absolute inset-0 z-0 bg-[#0c0c0c]" data-purpose="vector-tactical-map">
+<svg class="w-full h-full" fill="none" viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="drCone" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"></stop>
+<stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"></stop>
+</linearGradient>
+</defs>
+<!-- Street Blocks -->
+<polygon fill="#141414" points="-20,160 140,130 160,320 -10,350" stroke="#1f1f1f" stroke-width="1"></polygon>
+<polygon fill="#161616" points="210,120 410,80 430,290 230,320" stroke="#1f1f1f" stroke-width="1"></polygon>
+<polygon fill="#131313" points="-20,420 130,380 150,680 -10,710" stroke="#1e1e1e" stroke-width="1"></polygon>
+<polygon fill="#151515" points="220,380 410,340 430,660 230,690" stroke="#1f1f1f" stroke-width="1"></polygon>
+<!-- Minor Cross Streets -->
+<line stroke="#252525" stroke-linecap="round" stroke-width="14" x1="-30" x2="420" y1="240" y2="170"></line>
+<line stroke="#252525" stroke-linecap="round" stroke-width="16" x1="-30" x2="420" y1="530" y2="450"></line>
+<line stroke="#202020" stroke-width="12" x1="80" x2="40" y1="40" y2="820"></line>
+<line stroke="#202020" stroke-width="12" x1="330" x2="290" y1="40" y2="820"></line>
+<!-- Montgomery Street Base Corridor -->
+<path d="M 120 790 L 195 440 L 330 220 L 370 170" stroke="#2a2a2a" stroke-linecap="round" stroke-linejoin="round" stroke-width="26"></path>
+<!-- Active Route Snapped Corridor (Crisp Stark White) -->
+<path d="M 120 790 L 195 440 L 330 220 L 370 170" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+<!-- Street Labels -->
+<text fill="#666666" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2" transform="rotate(-68 50 610)" x="50" y="610">BUSH ST</text>
+<text fill="#888888" font-family="Inter, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5" transform="rotate(-68 175 470)" x="175" y="470">MONTGOMERY ST</text>
+<text fill="#666666" font-family="Inter, sans-serif" font-size="9" font-weight="700" letter-spacing="1.2" x="270" y="270">COLUMBUS AVE</text>
+<!-- Dead Reckoning Estimated Vector & Uncertainty Cone (Montgomery St at (195, 440)) -->
+<polygon fill="url(#drCone)" points="195,440 160,320 240,305"></polygon>
+<line opacity="0.6" stroke="#FFFFFF" stroke-dasharray="3 3" stroke-width="1" x1="195" x2="160" y1="440" y2="320"></line>
+<line opacity="0.6" stroke="#FFFFFF" stroke-dasharray="3 3" stroke-width="1" x1="195" x2="240" y1="440" y2="305"></line>
+<!-- DR Dynamic Uncertainty Halo -->
+<circle class="dr-halo" cx="195" cy="440" fill="#FFFFFF" r="28"></circle>
+<circle cx="195" cy="440" opacity="0.75" r="19" stroke="#FFFFFF" stroke-dasharray="3 3" stroke-width="1.2"></circle>
+<!-- Vehicle Chevron Puck on Montgomery St (Heading ~ -32 deg) -->
+<g transform="translate(195, 440) rotate(-32)">
+<circle cx="0" cy="0" fill="#000000" r="15" stroke="#FFFFFF" stroke-width="2.2"></circle>
+<polygon fill="#FFFFFF" points="0,-8 6,6 0,3.5 -6,6"></polygon>
+</g>
+</svg>
+<!-- Floating Map Mode Badge -->
+<div class="absolute left-4 top-[244px] z-10" data-purpose="sensor-mode-badge">
+<div class="px-2.5 py-1.5 rounded-xl bg-black/90 backdrop-blur-md border border-neutral-800 shadow-pill flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+<div>
+<div class="flex items-center gap-1">
+<span class="text-[9px] font-extrabold tracking-wider uppercase text-white">Inertial Fusion</span>
+<span class="text-[8px] font-mono px-1 rounded bg-white text-black font-bold">DR-v3</span>
+</div>
+<div class="text-[8px] text-neutral-400 font-medium leading-tight">6-Axis IMU • Wheel Ticks Active</div>
+</div>
+</div>
+</div>
+<!-- Floating Right Map Controls -->
+<div class="absolute right-4 top-[236px] flex flex-col gap-2.5 z-10" data-purpose="map-quick-controls">
+<button aria-label="Recenter" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-black active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="7"></circle>
+<line x1="12" x2="12" y1="2" y2="5"></line>
+<line x1="12" x2="12" y1="19" y2="22"></line>
+<line x1="2" x2="5" y1="12" y2="12"></line>
+<line x1="19" x2="22" y1="12" y2="12"></line>
+</svg>
+</button>
+<button aria-label="Audio Guidance" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-black active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+<path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+</svg>
+</button>
+<button aria-label="Map Layers" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-black active:scale-95 transition-transform">
+<svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+<polyline points="2 17 12 22 22 17"></polyline>
+<polyline points="2 12 12 17 22 12"></polyline>
+</svg>
+</button>
+</div>
+</div>
+<!-- END: Vector Tactical Map Viewport -->
+<!-- BEGIN: Top Navigation Section -->
+<div class="relative z-30 pt-12 px-4 flex flex-col gap-2" data-purpose="top-navigation-cluster">
+<!-- Item 3: Turn-by-Turn Card (#111111, white text) -->
+<div class="bg-[#111111] text-white rounded-2xl p-3.5 border border-[#262626] shadow-card flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
+<!-- Turn Right Icon -->
+<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<polyline points="14 14 19 9 14 4"></polyline>
+<path d="M5 20v-7a4 4 0 0 1 4-4h10"></path>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5">
+<span class="text-xl font-extrabold tracking-tight text-white leading-none">In 350 ft</span>
+<span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-white text-black leading-none">NEXT</span>
+</div>
+<span class="text-[10px] font-semibold text-neutral-400 truncate">Sentinel Bldg</span>
+</div>
+<p class="text-[13px] font-bold truncate text-white leading-snug mt-1">Turn right onto Montgomery St</p>
+<div class="flex items-center gap-1 text-[10px] text-neutral-400 truncate mt-0.5">
+<span>Then: 0.8 mi on Columbus Ave</span>
+</div>
+</div>
+</div>
+<!-- Item 4: HUD Telemetry Bar (Polished pure white card matching reference Image 17) -->
+<div class="bg-white rounded-[16px] px-3.5 py-2.5 shadow-card border border-neutral-200 text-black flex items-center justify-between" data-purpose="telemetry-bar-hud">
+<!-- Col 1: Speed -->
+<div class="flex items-center gap-2 pr-2">
+<div class="flex items-baseline">
+<span class="text-2xl font-black tracking-tighter font-mono leading-none">31</span>
+<div class="flex flex-col ml-1">
+<span class="text-[8px] font-extrabold uppercase text-neutral-500 leading-none">MPH</span>
+<span class="text-[7px] font-bold text-neutral-400 font-mono mt-0.5 leading-none">GPS: N/A</span>
+</div>
+</div>
+<span class="text-[8px] font-bold px-1 py-0.5 rounded border border-neutral-400 text-neutral-700 leading-none">35 LIMIT</span>
+</div>
+<!-- Divider -->
+<div class="w-[1px] h-7 bg-neutral-200"></div>
+<!-- Col 2: Road Match -->
+<div class="px-2 flex flex-col justify-center text-left">
+<div class="flex items-center gap-1 leading-none">
+<span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+<span class="text-[8px] font-bold uppercase text-neutral-500 tracking-wider">ROAD MATCH</span>
+</div>
+<div class="text-[11px] font-extrabold text-black font-mono mt-0.5 leading-none">89% <span class="font-sans font-semibold text-neutral-500 text-[9px]">• Lock</span></div>
+</div>
+<!-- Divider -->
+<div class="w-[1px] h-7 bg-neutral-200"></div>
+<!-- Col 3: Outage -->
+<div class="px-2 flex flex-col justify-center text-left">
+<span class="text-[8px] font-bold uppercase text-neutral-500 tracking-wider leading-none">OUTAGE</span>
+<div class="text-[11px] font-bold text-black font-mono mt-0.5 leading-none">00:18 <span class="font-sans text-neutral-500 text-[8px] font-medium">(IMU)</span></div>
+</div>
+<!-- Divider -->
+<div class="w-[1px] h-7 bg-neutral-200"></div>
+<!-- Col 4: Trip ETA -->
+<div class="pl-2 flex flex-col justify-center text-right">
+<div class="text-[12px] font-black text-black leading-none font-mono">12 min</div>
+<div class="text-[9px] text-neutral-500 font-medium mt-0.5 leading-none flex items-center justify-end gap-1">
+<span>3.4 mi</span>
+<span>•</span>
+<span class="text-black font-bold">9:53 AM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Top Navigation Section -->
+<!-- BEGIN: Bottom Reassurance Sheet (GNSS Outage Panel) -->
+<div class="mt-auto relative z-30 px-3 pb-2" data-purpose="reassurance-sheet-container">
+<section class="bg-white rounded-[24px] shadow-sheet border border-neutral-200 p-4 pt-2.5 text-black flex flex-col gap-2.5">
+<!-- Grab Handle -->
+<div class="w-9 h-1 bg-neutral-300 rounded-full mx-auto mb-0.5"></div>
+<!-- Top Badges -->
+<div class="flex items-center justify-between gap-1.5">
+<!-- Outage Tag -->
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-100 border border-neutral-300 text-neutral-800 text-[11px] font-semibold">
+<span class="w-2 h-2 rounded-full bg-neutral-600 flex items-center justify-center text-[8px] text-white font-bold">!</span>
+<span>GNSS signal unavailable</span>
+</div>
+<!-- Mode Tag -->
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black text-white text-[9px] font-extrabold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+<span>DEAD RECKONING ACTIVE</span>
+</div>
+</div>
+<!-- Headline & Subtitle -->
+<div>
+<h2 class="text-[14px] font-extrabold text-black leading-tight">Voyager is continuing with dead reckoning</h2>
+<p class="text-[11px] text-[#666666] leading-snug mt-0.5">Your vehicle path is continuously calculated via internal motion sensors and road network geometry.</p>
+</div>
+<!-- 3-Metric Row -->
+<div class="grid grid-cols-3 gap-1.5 bg-[#f5f5f5] p-2 rounded-xl border border-neutral-200 text-center">
+<div class="flex flex-col items-center">
+<span class="text-[8px] uppercase font-bold text-neutral-500 tracking-wider">Outage Duration</span>
+<span class="text-[13px] font-black text-black font-mono mt-0.5">00:18</span>
+<span class="text-[8px] text-neutral-500">Satellite sync pending</span>
+</div>
+<div class="flex flex-col items-center border-x border-neutral-300 px-0.5">
+<span class="text-[8px] uppercase font-bold text-neutral-500 tracking-wider">Distance Est.</span>
+<span class="text-[13px] font-black text-black font-mono mt-0.5">164 m</span>
+<span class="text-[8px] text-neutral-500">Wheel tick calibrated</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="text-[8px] uppercase font-bold text-neutral-500 tracking-wider">Confidence</span>
+<span class="inline-block mt-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-neutral-200 text-black border border-neutral-300">High (89%)</span>
+<span class="text-[8px] text-neutral-500">Road corridor lock</span>
+</div>
+</div>
+<!-- Re-stabilization Accordion Banner -->
+<div class="rounded-xl bg-[#f7f7f7] border border-neutral-200 overflow-hidden">
+<button class="w-full px-3 py-1.5 text-left flex items-center justify-between text-[11px] font-bold text-black hover:bg-neutral-100 transition-colors" id="toggleStabilizationBtn">
+<div class="flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+</svg>
+<span>Automatic Return: Seamless Re-stabilization</span>
+</div>
+<svg class="w-3.5 h-3.5 text-neutral-500 transform transition-transform duration-200" fill="none" id="chevronIcon" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</button>
+<div class="details-body max-h-0 opacity-0 overflow-hidden px-3 pb-2 text-[10px] text-neutral-600 border-t border-neutral-200" id="detailsBody">
+<div class="pt-1.5 flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-black font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+<span>Phase 1: IMU &amp; Heading integration (Active)</span>
+</div>
+<div class="flex items-center gap-1.5 text-neutral-600">
+<span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+<span>Phase 2: Kalman filter satellite blending</span>
+</div>
+<div class="flex items-center gap-1.5 text-neutral-500">
+<span class="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
+<span>Phase 3: Smooth snapback to high-precision GNSS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex items-center gap-2 pt-0.5">
+<button class="flex-1 py-2.5 px-4 bg-black hover:bg-neutral-800 active:scale-[0.98] transition-all rounded-xl text-white font-bold text-[13px] flex items-center justify-center gap-1.5 shadow-sm">
+<svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+<span>Keep navigating</span>
+</button>
+<button class="py-2.5 px-3.5 bg-white border border-[#E5E5E5] hover:bg-neutral-100 active:scale-[0.98] transition-all rounded-xl text-black font-bold text-[12px] flex items-center gap-1" id="sensorsBtn">
+<span>Sensors •••</span>
+</button>
+</div>
+<!-- Footer Note -->
+<div class="flex items-center justify-between text-[10px] text-neutral-500 px-1 pt-0.5">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+            Audio cues enabled
+          </span>
+<button class="font-semibold text-neutral-700 underline hover:text-black transition-colors">Alternative route</button>
+</div>
+</section>
+</div>
+<!-- END: Bottom Reassurance Sheet -->
+<!-- BEGIN: iOS Home Indicator -->
+<div class="relative z-40 w-full pb-2 flex justify-center" data-purpose="home-indicator">
+<div class="w-32 h-1 bg-white/60 rounded-full"></div>
+</div>
+<!-- END: iOS Home Indicator -->
+</div>
+<!-- END: Mobile Device Frame -->
+<!-- JavaScript for Interactive Accordion -->
+<script>
+    const toggleBtn = document.getElementById('toggleStabilizationBtn');
+    const details = document.getElementById('detailsBody');
+    const chevron = document.getElementById('chevronIcon');
+    let isExpanded = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        details.style.maxHeight = '90px';
+        details.style.opacity = '1';
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        details.style.maxHeight = '0px';
+        details.style.opacity = '0';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    });
+
+    document.getElementById('sensorsBtn').addEventListener('click', () => {
+      toggleBtn.click();
+    });
+  </script>
+</body></html>

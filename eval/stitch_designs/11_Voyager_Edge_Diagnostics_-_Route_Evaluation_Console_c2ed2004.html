@@ -1,0 +1,688 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary-fixed-dim":"#fabb67","inverse-primary":"#89d4ca","error-container":"#ffdad6","on-tertiary":"#ffffff","on-primary-container":"#9de9de","on-error":"#ffffff","primary-fixed":"#a5f0e6","surface-container":"#e1f1ec","on-primary-fixed":"#00201d","on-tertiary-fixed":"#2a1800","on-surface-variant":"#3f4947","surface-container-high":"#dbece6","secondary-fixed":"#d6e4f2","secondary":"#52606c","surface-dim":"#cdded8","on-background":"#101e1b","on-secondary-container":"#566470","on-tertiary-fixed-variant":"#643f00","on-secondary-fixed-variant":"#3b4854","outline":"#6f7977","surface-container-lowest":"#ffffff","surface-variant":"#d6e6e1","on-secondary-fixed":"#0f1d27","tertiary-container":"#855605","on-surface":"#101e1b","on-tertiary-container":"#ffd4a0","outline-variant":"#bec9c6","on-primary":"#ffffff","on-primary-fixed-variant":"#005049","background":"#edfdf8","surface-tint":"#156a62","secondary-fixed-dim":"#bac8d6","surface-container-highest":"#d6e6e1","surface":"#edfdf8","on-error-container":"#93000a","secondary-container":"#d3e1f0","error":"#ba1a1a","primary-fixed-dim":"#89d4ca","tertiary-fixed":"#ffddb6","tertiary":"#664000","inverse-on-surface":"#e4f4ef","inverse-surface":"#253330","surface-bright":"#edfdf8","surface-container-low":"#e7f7f2","primary-container":"#176b63","on-secondary":"#ffffff","primary":"#00524b"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"0.75rem","space-xl":"1rem","space-sm":"0.375rem","margin":"1rem","space-lg":"0.75rem","space-md":"0.5rem","space-xs":"0.25rem"},"fontFamily":{"body-md":["Inter"],"label-sm":["JetBrains Mono"],"label-md":["JetBrains Mono"],"headline-sm":["Inter"],"headline-md":["Inter"],"label-lg":["JetBrains Mono"],"headline-lg":["Inter"],"body-sm":["Inter"],"body-lg":["Inter"]},"fontSize":{"body-md":["13px",{"lineHeight":"18px","fontWeight":"400"}],"label-sm":["10px",{"lineHeight":"12px","letterSpacing":"0.05em","fontWeight":"500"}],"label-md":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"500"}],"headline-sm":["14px",{"lineHeight":"18px","letterSpacing":"-0.005em","fontWeight":"600"}],"headline-md":["16px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-lg":["13px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["20px",{"lineHeight":"26px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"body-lg":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface min-h-screen antialiased"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest border-b border-outline-variant/50 shadow-[0_1px_4px_rgba(20,34,31,0.04)]"><div class="h-12 w-full px-margin flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-xl flex-shrink-0"><div class="flex items-center gap-space-sm py-space-xs"><div class="w-6 h-6 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[15px]">radar</span></div><div class="flex items-baseline gap-space-xs"><span class="font-headline-sm text-headline-sm tracking-wider font-semibold text-primary uppercase">VOYAGER</span><span class="font-label-md text-label-md text-on-surface-variant font-normal">/ Edge Diagnostics</span></div></div><div class="h-4 w-px bg-outline-variant"></div><nav class="flex items-center gap-space-md h-12" data-active-classes="text-primary border-b-2 border-primary font-medium"><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-space-xs h-full flex items-center transition-colors" data-path="live-runs" href="#">Live Runs</a><a aria-current="page" class="px-space-xs h-full flex items-center transition-colors text-primary border-b-2 border-primary font-medium" data-path="route-analysis" href="#">Route Analysis</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-space-xs h-full flex items-center transition-colors" data-path="dataset-runs" href="#">Dataset Runs</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-space-xs h-full flex items-center transition-colors" data-path="models" href="#">Models</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-space-xs h-full flex items-center transition-colors" data-path="devices" href="#">Devices</a><a class="text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm px-space-xs h-full flex items-center transition-colors" data-path="settings" href="#">Settings</a></nav></div><div class="flex items-center gap-space-md flex-shrink-0"><span class="font-label-sm text-label-sm px-space-sm py-space-xs rounded bg-surface-container-high text-on-surface-variant border border-outline-variant uppercase font-medium">PROD-EDGE v2.4.1</span><div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-space-xs rounded border border-outline-variant"><span class="material-symbols-outlined text-outline text-[14px]">database</span><span class="font-label-sm text-label-sm text-on-surface font-medium">DS-CAN-982</span><span class="material-symbols-outlined text-outline text-[12px]">expand_more</span></div><div class="flex items-center gap-space-xs px-space-sm py-space-xs text-on-surface-variant font-label-sm text-label-sm"><span class="material-symbols-outlined text-outline text-[14px]">schedule</span><span>UTC 14:02:45</span></div><button class="w-7 h-7 flex items-center justify-center rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span></button><div class="h-4 w-px bg-outline-variant"></div><div class="flex items-center gap-space-sm pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left"><span class="font-label-sm text-label-sm text-on-surface font-semibold leading-tight">CP</span><span class="font-label-sm text-label-sm text-on-surface-variant text-[9px] leading-tight">Lead GNSS/INS Eng</span></div></div></div></div></header><main class="w-full pt-12 bg-surface min-h-[calc(100vh-3rem)]"><div class="flex flex-col w-full">
+<!-- Run Header -->
+<section class="w-full bg-surface-container-lowest shadow-sm px-margin py-space-md">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">RUN-2025-0814-SF-URBAN</span>
+<span class="inline-flex items-center gap-space-xs px-space-sm py-[2px] rounded bg-surface-container text-primary font-label-sm text-label-sm uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            Evaluated • Complete
+          </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-space-sm py-[2px] rounded">
+            IO-VNBD (SF Financial District Urban Canyon)
+          </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-space-sm py-[2px] rounded">
+            Sedan Testbed #04
+          </span>
+</div>
+<div class="flex flex-wrap items-center gap-x-space-lg gap-y-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[13px] text-outline">sensors</span>
+            HW: Bosch BMI088 + Murata SCHA63T + iPhone 15 Pro (Secondary)
+          </span>
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[13px] text-outline">model_training</span>
+            Model: IDR-Fusion-Net v4.2.1-quant
+          </span>
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[13px] text-outline">speed</span>
+            Sampling: 100 Hz IMU / 10 Hz GNSS
+          </span>
+</div>
+</div>
+<!-- Header Controls -->
+<div class="flex items-center gap-space-sm self-start xl:self-auto">
+<button class="h-7 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">file_download</span>
+<span>Export HDF5 / CSV</span>
+</button>
+<button class="h-7 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">replay</span>
+<span>Re-run Evaluation</span>
+</button>
+<button class="h-7 px-space-md bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm rounded flex items-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">splitscreen</span>
+<span>Inspect Slices</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Metric Overview Grid (6 Cards) -->
+<section class="w-full px-margin pt-space-md">
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-space-sm">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>Pos Error (RMSE)</span>
+<span class="material-symbols-outlined text-[14px] text-primary">gps_fixed</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">1.42</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">m</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>Peak: 3.84m (45s tunnel)</span>
+<span class="text-primary font-semibold">-84.2%</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>Drift Rate</span>
+<span class="material-symbols-outlined text-[14px] text-primary">navigation</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">0.68</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">%</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>Dist: 14.8 km</span>
+<span class="text-on-surface">10.1 m total</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>GNSS Outage</span>
+<span class="material-symbols-outlined text-[14px] text-tertiary">signal_disconnected</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">02:45</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">total</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>3 events</span>
+<span class="text-tertiary">Max 1:12</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>Inference Latency</span>
+<span class="material-symbols-outlined text-[14px] text-primary">memory</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">4.8</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">ms</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>P99: 7.2 ms</span>
+<span class="text-primary font-semibold">ANE/TPU</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>Update Rate</span>
+<span class="material-symbols-outlined text-[14px] text-primary">sync</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">100</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">Hz</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>0 drops</span>
+<span class="text-on-surface">jitter &lt; 0.4ms</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm uppercase">
+<span>Map-Match Conf</span>
+<span class="material-symbols-outlined text-[14px] text-primary">polyline</span>
+</div>
+<div class="my-space-xs">
+<span class="font-headline-lg text-headline-lg font-semibold text-on-surface">96.4</span>
+<span class="font-label-md text-label-md text-on-surface-variant ml-0.5">%</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>OSM SD Network</span>
+<span class="text-primary font-semibold">High Topo</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Multi-Pane Workbench -->
+<section class="w-full px-margin py-space-md flex-1">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-md items-start">
+<!-- Center Workbench (Left 9 cols / 75%) -->
+<div class="xl:col-span-9 flex flex-col gap-space-md">
+<!-- Large Interactive Route Trajectory Canvas -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col">
+<!-- Canvas Top Toolbar -->
+<div class="h-10 px-space-md bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="font-label-md text-label-md text-on-surface font-semibold uppercase tracking-wider flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+                Multi-Trajectory Spatial Canvas
+              </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">
+                EPSG:4326 • SF Financial District Corridor
+              </span>
+</div>
+<!-- Viewport Actions -->
+<div class="flex items-center gap-space-xs">
+<button class="h-6 px-space-sm bg-surface-container-lowest text-on-surface hover:bg-surface-container text-[11px] font-label-sm rounded flex items-center gap-space-xs" id="btn-recenter" type="button">
+<span class="material-symbols-outlined text-[13px]">my_location</span>
+<span>Recenter</span>
+</button>
+<button class="h-6 px-space-sm bg-surface-container-lowest text-on-surface hover:bg-surface-container text-[11px] font-label-sm rounded flex items-center gap-space-xs" id="btn-split" type="button">
+<span class="material-symbols-outlined text-[13px]">view_column</span>
+<span>A/B Split</span>
+</button>
+<div class="flex items-center bg-surface-container-lowest rounded">
+<button class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+<span class="text-[10px] font-label-sm px-1 text-on-surface">18x</span>
+<button class="w-6 h-6 flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[14px]">remove</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Vector Visualizer Map -->
+<div class="relative w-full h-[460px] bg-[#f8faf9] overflow-hidden select-none">
+<!-- Technical Urban Grid Vectors (SVG) -->
+<svg class="w-full h-full" id="route-canvas" viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Urban Grid Pattern -->
+<pattern height="40" id="urbanGrid" patternUnits="userSpaceOnUse" width="40">
+<path d="M 40 0 L 0 0 0 40" fill="none" stroke="#d8e2de" stroke-width="0.75"></path>
+</pattern>
+<!-- Multipath Error Zone Gradient -->
+<radialGradient cx="50%" cy="50%" id="errorGlow" r="50%">
+<stop offset="0%" stop-color="#ba1a1a" stop-opacity="0.32"></stop>
+<stop offset="60%" stop-color="#ba1a1a" stop-opacity="0.14"></stop>
+<stop offset="100%" stop-color="#ba1a1a" stop-opacity="0"></stop>
+</radialGradient>
+<filter height="140%" id="subtleGlow" width="140%" x="-20%" y="-20%">
+<feDropShadow dx="0" dy="1" flood-color="#00201d" flood-opacity="0.2" stdDeviation="1.5"></feDropShadow>
+</filter>
+</defs>
+<!-- Base Street Grid Background -->
+<rect fill="url(#urbanGrid)" height="100%" width="100%"></rect>
+<!-- Street Polygons (San Francisco Financial District Street Layout Style) -->
+<g class="city-geometry opacity-40">
+<!-- Montgomery St -->
+<line stroke="#bcc7c3" stroke-width="26" x1="280" x2="280" y1="0" y2="460"></line>
+<!-- Kearny St -->
+<line stroke="#bcc7c3" stroke-width="26" x1="450" x2="450" y1="0" y2="460"></line>
+<!-- Stockton St -->
+<line stroke="#bcc7c3" stroke-width="26" x1="620" x2="620" y1="0" y2="460"></line>
+<!-- Tunnel section overlay -->
+<rect fill="#a4b3ae" height="150" width="26" x="607" y="160"></rect>
+<!-- Cross Streets -->
+<!-- Bush St -->
+<line stroke="#bcc7c3" stroke-width="20" x1="0" x2="960" y1="90" y2="90"></line>
+<!-- Sutter St -->
+<line stroke="#bcc7c3" stroke-width="22" x1="0" x2="960" y1="210" y2="210"></line>
+<!-- Post St -->
+<line stroke="#bcc7c3" stroke-width="22" x1="0" x2="960" y1="330" y2="330"></line>
+<!-- Street Names (Technical Minimalist typography) -->
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="290" y="25">MONTGOMERY ST</text>
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="460" y="25">KEARNY ST</text>
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="630" y="25">STOCKTON TUNNEL (UNDERPASS)</text>
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="30" y="82">BUSH ST</text>
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="30" y="202">SUTTER ST</text>
+<text class="font-label-sm text-[9px] tracking-widest" fill="#52606c" x="30" y="322">POST ST</text>
+</g>
+<!-- High Error Zones (Montgomery Canyon & Stockton Tunnel) -->
+<g id="layer-error-zones">
+<!-- Zone 1: Montgomery & Sutter Canyon -->
+<circle cx="280" cy="210" fill="url(#errorGlow)" r="48"></circle>
+<circle cx="280" cy="210" fill="none" r="48" stroke="#ba1a1a" stroke-dasharray="3,3" stroke-width="0.8"></circle>
+<!-- Zone 2: Stockton Tunnel Blackout zone -->
+<ellipse cx="620" cy="235" fill="url(#errorGlow)" rx="55" ry="85"></ellipse>
+<ellipse cx="620" cy="235" fill="none" rx="55" ry="85" stroke="#ba1a1a" stroke-dasharray="4,3" stroke-width="0.8"></ellipse>
+</g>
+<!-- Trajectory 1: Ground Truth (Muted Gray #8C9994, Dashed GNSS-RTK baseline) -->
+<g id="layer-ground-truth">
+<path d="M 120,90 L 280,90 L 280,210 L 450,210 L 450,330 L 620,330 L 620,130 L 840,130" fill="none" stroke="#6f7977" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</g>
+<!-- Trajectory 2: Raw Inertial Path (Amber, severe drift during tunnel & canyon) -->
+<g id="layer-raw-imu">
+<path d="M 120,90 Q 210,91 280,93 Q 284,140 274,180 Q 268,206 310,214 Q 380,218 445,212 Q 455,270 440,315 Q 436,334 500,336 C 580,338 575,270 560,205 C 550,150 565,115 690,105 Q 780,100 840,110" fill="none" stroke="#664000" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.85" stroke-width="2"></path>
+</g>
+<!-- Trajectory 3: AI-Corrected Path (Teal #00524b, smooth corrected baseline) -->
+<g id="layer-ai-corrected">
+<path d="M 120,90 L 278,90.5 Q 282,150 279.5,208.5 Q 360,209.5 449.5,210 Q 450.5,270 449.5,329 Q 530,330 618.5,330.5 Q 617.5,230 619,131 L 840,130.5" fill="none" filter="url(#subtleGlow)" stroke="#00524b" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</g>
+<!-- Trajectory 4: Map-Matched Path (Navy #0f1d27, strictly snaps to centerlines) -->
+<g id="layer-map-matched">
+<path d="M 120,90 L 280,90 L 280,210 L 450,210 L 450,330 L 620,330 L 620,130 L 840,130" fill="none" stroke="#0f1d27" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"></path>
+</g>
+<!-- Current Vehicle Position (T+07:45 Scrubber Playhead Point) -->
+<g id="vehicle-cursor" transform="translate(620, 235)">
+<circle class="animate-ping" fill="#00524b" fill-opacity="0.15" r="14"></circle>
+<circle fill="#00524b" r="6"></circle>
+<circle fill="#ffffff" r="2.5"></circle>
+<!-- Heading Arrow -->
+<polygon fill="#00524b" points="0,-12 4,-6 -4,-6"></polygon>
+</g>
+<!-- Spatial Landmark Annotations / Badges -->
+<!-- Outage 1 Marker -->
+<g transform="translate(280, 210)">
+<circle fill="#664000" r="3"></circle>
+<line stroke="#6f7977" stroke-width="1" x1="0" x2="25" y1="0" y2="-28"></line>
+<rect fill="#ffffff" height="22" rx="3" stroke="#bec9c6" stroke-width="0.8" width="135" x="25" y="-40"></rect>
+<text class="font-label-sm text-[9.5px] font-medium" fill="#101e1b" x="32" y="-26">Urban Canyon [00:03:15]</text>
+</g>
+<!-- Outage 2 Marker (Tunnel Entrance) -->
+<g transform="translate(620, 310)">
+<circle fill="#ba1a1a" r="3"></circle>
+<line stroke="#6f7977" stroke-width="1" x1="0" x2="30" y1="0" y2="24"></line>
+<rect fill="#ffffff" height="22" rx="3" stroke="#bec9c6" stroke-width="0.8" width="145" x="30" y="14"></rect>
+<text class="font-label-sm text-[9.5px] font-semibold" fill="#93000a" x="37" y="28">GNSS Cutoff Point [00:07:20]</text>
+</g>
+<!-- Convergence Marker -->
+<g transform="translate(620, 150)">
+<circle fill="#00524b" r="3"></circle>
+<line stroke="#6f7977" stroke-width="1" x1="0" x2="30" y1="0" y2="-18"></line>
+<rect fill="#ffffff" height="22" rx="3" stroke="#bec9c6" stroke-width="0.8" width="150" x="30" y="-30"></rect>
+<text class="font-label-sm text-[9.5px] font-medium" fill="#00524b" x="36" y="-16">Convergence Point [00:08:34]</text>
+</g>
+</svg>
+<!-- Floating Live Cursor Metric Tag -->
+<div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-space-md py-space-xs rounded shadow-sm flex items-center gap-space-md font-label-sm text-label-sm">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-semibold text-on-surface">STOCKTON TUNNEL IN-PROGRESS</span>
+</div>
+<span class="text-on-surface-variant">Pos: 37.7914°N, 122.4069°W</span>
+<span class="text-on-surface-variant">Alt: 24.3m</span>
+<span class="text-tertiary font-semibold">RTK Lost</span>
+</div>
+<!-- Trajectory Interactive Legend -->
+<div class="absolute bottom-3 left-3 right-3 sm:right-auto bg-surface-container-lowest/95 backdrop-blur-sm p-space-sm rounded shadow-sm flex flex-wrap items-center gap-space-md font-label-sm text-label-sm">
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<input checked="" class="rounded border-outline text-primary focus:ring-0" id="chk-gt" type="checkbox">
+<span class="w-3 h-0.5 bg-outline border-b border-dashed"></span>
+<span class="text-on-surface">Ground Truth (RTK)</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<input checked="" class="rounded border-outline text-primary focus:ring-0" id="chk-raw" type="checkbox">
+<span class="w-3 h-1 bg-[#664000] rounded-sm"></span>
+<span class="text-on-surface">Raw IMU</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<input checked="" class="rounded border-outline text-primary focus:ring-0" id="chk-ai" type="checkbox">
+<span class="w-3 h-1 bg-[#00524b] rounded-sm"></span>
+<span class="text-on-surface font-semibold text-primary">AI-Corrected</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<input checked="" class="rounded border-outline text-primary focus:ring-0" id="chk-mm" type="checkbox">
+<span class="w-3 h-1 bg-[#0f1d27] rounded-sm"></span>
+<span class="text-on-surface">Map-Matched</span>
+</label>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<input checked="" class="rounded border-outline text-primary focus:ring-0" id="chk-err" type="checkbox">
+<span class="w-2.5 h-2.5 rounded-full bg-error/30 border border-error"></span>
+<span class="text-on-surface">Error Zones (&gt;2.5m)</span>
+</label>
+</div>
+</div>
+</div>
+<!-- 15-Minute Timeline Scrubber for Blackout Intervals -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Drive Mission Timeline</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">[00:00:00 - 00:15:32]</span>
+</div>
+<!-- Playhead Instant Readout -->
+<div class="flex items-center gap-space-md font-label-sm text-label-sm px-space-sm py-1 bg-surface-container rounded">
+<span class="font-semibold text-primary">T+07:45</span>
+<span class="text-on-surface-variant">IMU Drift: <strong class="text-tertiary">4.2m</strong></span>
+<span class="text-on-surface-variant">AI Error: <strong class="text-primary">1.1m</strong></span>
+<span class="text-on-surface-variant">GNSS Sats: <strong class="text-error">0</strong></span>
+</div>
+</div>
+<!-- The Scrubber Track -->
+<div class="relative w-full h-9 bg-surface-container rounded overflow-hidden select-none cursor-pointer flex items-center px-1">
+<!-- Normal GNSS Base Bar -->
+<div class="absolute inset-x-0 h-4 bg-primary-fixed/40 top-2.5 rounded-sm"></div>
+<!-- Outage 1: Montgomery Canyon (03:15 - 04:00) -> approx 21% to 26% -->
+<div class="absolute h-4 top-2.5 bg-tertiary-fixed-dim/90 rounded-sm" style="left: 20.9%; width: 4.8%;" title="Outage 1: Montgomery Canyon (45s)">
+<span class="absolute -top-3.5 left-0 font-label-sm text-[9px] text-tertiary">Outage 1</span>
+</div>
+<!-- Outage 2: Stockton Tunnel (07:20 - 08:32) -> approx 47% to 55% -->
+<div class="absolute h-4 top-2.5 bg-error-container rounded-sm" style="left: 47.2%; width: 7.7%;" title="Outage 2: Stockton Tunnel (72s)">
+<span class="absolute -top-3.5 left-0 font-label-sm text-[9px] text-error font-semibold">Tunnel Blackout</span>
+</div>
+<!-- Outage 3: Market St Overhang (11:05 - 11:53) -> approx 71% to 76% -->
+<div class="absolute h-4 top-2.5 bg-tertiary-fixed-dim/90 rounded-sm" style="left: 71.4%; width: 5.1%;" title="Outage 3: Market St (48s)">
+<span class="absolute -top-3.5 left-0 font-label-sm text-[9px] text-tertiary">Outage 3</span>
+</div>
+<!-- Scrubber Playhead (Current Position at 07:45 -> 49.9%) -->
+<div class="absolute top-0 bottom-0 w-0.5 bg-primary z-20" style="left: 49.9%;">
+<div class="w-3 h-3 bg-primary -ml-1.5 -mt-0.5 rounded-sm transform rotate-45 shadow-sm"></div>
+</div>
+<!-- Time Ticks -->
+<div class="absolute bottom-0.5 inset-x-0 flex justify-between px-2 text-[9px] font-label-sm text-outline select-none pointer-events-none">
+<span>00:00</span>
+<span>03:00</span>
+<span>06:00</span>
+<span class="font-semibold text-primary">07:45</span>
+<span>09:00</span>
+<span>12:00</span>
+<span>15:32</span>
+</div>
+</div>
+<!-- Playback Controls Bar -->
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex items-center gap-space-xs">
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-surface-container text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">skip_previous</span>
+</button>
+<button class="w-8 h-7 px-space-xs bg-primary text-on-primary flex items-center justify-center rounded shadow-sm hover:bg-primary-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-surface-container text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">skip_next</span>
+</button>
+<div class="h-4 w-px bg-outline-variant mx-space-xs"></div>
+<!-- Speed Selector -->
+<div class="flex items-center bg-surface-container rounded p-0.5 font-label-sm text-[11px]">
+<button class="px-space-xs py-0.5 rounded text-on-surface-variant hover:text-on-surface" type="button">0.5x</button>
+<button class="px-space-xs py-0.5 rounded bg-surface-container-lowest text-on-surface font-semibold shadow-xs" type="button">1x</button>
+<button class="px-space-xs py-0.5 rounded text-on-surface-variant hover:text-on-surface" type="button">2x</button>
+<button class="px-space-xs py-0.5 rounded text-on-surface-variant hover:text-on-surface" type="button">5x</button>
+</div>
+</div>
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm">
+<button class="px-space-sm py-1 bg-surface-container hover:bg-surface-container-high rounded text-on-surface flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[14px]">fast_forward</span>
+<span>Jump to Next Outage</span>
+</button>
+<button class="px-space-sm py-1 bg-surface-container hover:bg-surface-container-high rounded text-on-surface flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[14px]">repeat</span>
+<span>Loop Outage 2</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Technical Diagnostic Graphs (Side-by-Side Dual Visualizers) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Graph 1: Cross-Track & Along-Track Error over Time -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Cross &amp; Along-Track Error (m)</span>
+<div class="flex items-center gap-space-sm font-label-sm text-[10px]">
+<span class="flex items-center gap-1"><span class="w-2.5 h-0.5 bg-primary"></span> Cross-Track</span>
+<span class="flex items-center gap-1"><span class="w-2.5 h-0.5 bg-secondary"></span> Along-Track</span>
+<span class="flex items-center gap-1"><span class="w-2.5 h-0.5 bg-tertiary"></span> Raw IMU</span>
+</div>
+</div>
+<!-- High density SVG Chart -->
+<div class="h-44 w-full pt-1">
+<svg class="w-full h-full" viewBox="0 0 450 160" xmlns="http://www.w3.org/2000/svg">
+<!-- Grid Lines -->
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="20" y2="20"></line>
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="55" y2="55"></line>
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="90" y2="90"></line>
+<line stroke="#bec9c6" stroke-width="1.2" x1="30" x2="440" y1="125" y2="125"></line> <!-- Ground truth zero -->
+<!-- Y-Axis Labels -->
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="24">4.0m</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="59">2.5m</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="94">1.0m</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="129">0.0m</text>
+<!-- Outage Highlight Zones -->
+<rect fill="#fabb67" fill-opacity="0.18" height="110" width="30" x="110" y="15"></rect>
+<rect fill="#ffdad6" fill-opacity="0.4" height="110" width="45" x="220" y="15"></rect>
+<rect fill="#fabb67" fill-opacity="0.18" height="110" width="30" x="330" y="15"></rect>
+<!-- Raw IMU Divergent Curve -->
+<path d="M 30,123 Q 80,122 110,116 Q 125,75 140,84 Q 180,95 220,90 Q 240,25 265,30 Q 300,50 330,85 Q 345,60 360,70 Q 400,98 440,110" fill="none" stroke="#664000" stroke-opacity="0.7" stroke-width="1.2"></path>
+<!-- Cross-track AI Error Curve -->
+<path d="M 30,124 Q 70,124 110,121 Q 125,102 140,118 Q 180,123 220,120 Q 242,88 265,116 Q 300,123 330,121 Q 345,108 360,119 Q 400,124 440,124" fill="none" stroke="#00524b" stroke-width="2"></path>
+<!-- Along-track AI Error Curve -->
+<path d="M 30,125 Q 70,125 110,123 Q 125,114 140,122 Q 180,124 220,123 Q 242,98 265,120 Q 300,124 330,122 Q 345,112 360,121 Q 400,124 440,125" fill="none" stroke="#52606c" stroke-dasharray="3,2" stroke-width="1.5"></path>
+<!-- Current Scrubber Line Indicator -->
+<line stroke="#00524b" stroke-width="1.2" x1="235" x2="235" y1="10" y2="135"></line>
+<circle cx="235" cy="94" fill="#00524b" r="3"></circle>
+<text class="font-label-sm text-[9px] font-semibold" fill="#00524b" x="240" y="86">1.12m</text>
+<!-- X-Axis Labels -->
+<text class="font-label-sm text-[9px]" fill="#52606c" x="30" y="145">00:00</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="125" y="145">03:40</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="242" y="145">07:45</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="345" y="145">11:30</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="440" y="145">15:32</text>
+</svg>
+</div>
+<div class="mt-space-xs pt-space-xs border-t border-outline-variant/30 flex justify-between font-label-sm text-[10px] text-on-surface-variant">
+<span>Zero-Baseline: RTK Dual-antenna ground reference</span>
+<span>Max Dev: <strong class="text-on-surface">3.84m (Raw: 18.2m)</strong></span>
+</div>
+</div>
+<!-- Graph 2: Inference Latency & Jitter Histogram -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Execution Latency Distribution (ms)</span>
+<div class="flex items-center gap-space-sm font-label-sm text-[10px]">
+<span class="px-space-xs py-0.5 bg-surface-container text-primary font-medium rounded">Mean 4.82ms</span>
+<span class="px-space-xs py-0.5 bg-surface-container text-on-surface font-medium rounded">P99 7.20ms</span>
+</div>
+</div>
+<!-- Histogram Bar Chart -->
+<div class="h-44 w-full pt-1">
+<svg class="w-full h-full" viewBox="0 0 450 160" xmlns="http://www.w3.org/2000/svg">
+<!-- Grid Lines -->
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="20" y2="20"></line>
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="60" y2="60"></line>
+<line stroke="#d6e6e1" stroke-dasharray="2,2" x1="30" x2="440" y1="100" y2="100"></line>
+<line stroke="#bec9c6" stroke-width="1.2" x1="30" x2="440" y1="130" y2="130"></line>
+<!-- Y-Axis Counts -->
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="24">40k</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="64">25k</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="end" x="24" y="104">10k</text>
+<!-- Histogram Bars -->
+<!-- 2.5ms - 3.5ms -->
+<rect fill="#a5f0e6" height="5" rx="1" width="18" x="45" y="125"></rect>
+<rect fill="#a5f0e6" height="12" rx="1" width="18" x="70" y="118"></rect>
+<rect fill="#89d4ca" height="28" rx="1" width="18" x="95" y="102"></rect>
+<!-- 4.0 - 5.0ms (Peak cluster) -->
+<rect fill="#89d4ca" height="62" rx="1" width="18" x="120" y="68"></rect>
+<rect fill="#176b63" height="98" rx="1" width="18" x="145" y="32"></rect>
+<rect fill="#00524b" height="108" rx="1" width="18" x="170" y="22"></rect>
+<rect fill="#176b63" height="85" rx="1" width="18" x="195" y="45"></rect>
+<!-- 5.5 - 7.0ms -->
+<rect fill="#89d4ca" height="50" rx="1" width="18" x="220" y="80"></rect>
+<rect fill="#89d4ca" height="32" rx="1" width="18" x="245" y="98"></rect>
+<rect fill="#a5f0e6" height="18" rx="1" width="18" x="270" y="112"></rect>
+<rect fill="#a5f0e6" height="10" rx="1" width="18" x="295" y="120"></rect>
+<!-- Tail / Outliers (P99 at 7.2ms) -->
+<rect fill="#fabb67" height="7" rx="1" width="18" x="320" y="123"></rect>
+<rect fill="#fabb67" height="4" rx="1" width="18" x="345" y="126"></rect>
+<rect fill="#ba1a1a" height="2" rx="1" width="18" x="370" y="128"></rect>
+<!-- P99 Indicator Line -->
+<line stroke="#664000" stroke-dasharray="2,2" stroke-width="1" x1="330" x2="330" y1="15" y2="130"></line>
+<text class="font-label-sm text-[9px] font-semibold" fill="#664000" x="333" y="28">P99 = 7.2ms</text>
+<!-- SLA 10ms Limit Line -->
+<line stroke="#ba1a1a" stroke-width="1.2" x1="410" x2="410" y1="15" y2="130"></line>
+<text class="font-label-sm text-[9px] font-semibold" fill="#ba1a1a" text-anchor="end" x="408" y="28">10ms Budget</text>
+<!-- X-Axis Labels -->
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="54" y="145">2.5</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="179" y="145">4.8 (Mode)</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="254" y="145">6.0</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="330" y="145">7.2</text>
+<text class="font-label-sm text-[9px]" fill="#52606c" text-anchor="middle" x="410" y="145">10.0 ms</text>
+</svg>
+</div>
+<div class="mt-space-xs pt-space-xs border-t border-outline-variant/30 flex justify-between font-label-sm text-[10px] text-on-surface-variant">
+<span>Inference Core: ANE 16-Core Int8 Quantized</span>
+<span>Tail Violations (&gt;10ms): <strong class="text-primary">0 (0.00%)</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Inspection Sidebar (Right 3 cols / 25%) -->
+<aside class="xl:col-span-3 flex flex-col gap-space-md">
+<!-- Outage Performance Breakdown -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/40">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Outage Breakdown</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 Events</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<!-- Event 1 -->
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-semibold text-on-surface">1. Montgomery St</span>
+<span class="text-on-surface-variant">45s duration</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-[10.5px]">
+<span>Mean Error: <strong class="text-on-surface">0.92 m</strong></span>
+<span>Recovery: <strong class="text-primary">1.2 s</strong></span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 32%;"></div>
+</div>
+</div>
+<!-- Event 2 (Tunnel) -->
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-semibold text-on-surface">2. Stockton Tunnel</span>
+<span class="text-error font-medium">72s blackout</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-[10.5px]">
+<span>Mean Error: <strong class="text-on-surface">1.84 m</strong></span>
+<span>Recovery: <strong class="text-tertiary">2.4 s</strong></span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-error h-full" style="width: 78%;"></div>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="p-space-sm rounded bg-surface-container-low flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-semibold text-on-surface">3. Market St Underpass</span>
+<span class="text-on-surface-variant">48s duration</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-[10.5px]">
+<span>Mean Error: <strong class="text-on-surface">1.15 m</strong></span>
+<span>Recovery: <strong class="text-primary">0.8 s</strong></span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 44%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sensor Health & Calibration Metrics -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/40">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Sensor Health &amp; Calib</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-primary font-medium">Nominal</span>
+</div>
+<div class="flex flex-col divide-y divide-outline-variant/30 text-on-surface font-label-sm text-label-sm">
+<div class="flex items-center justify-between py-1.5">
+<span class="text-on-surface-variant">Accel Bias Stability</span>
+<span class="font-semibold">12 µg</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-on-surface-variant">Gyro In-Run Bias</span>
+<span class="font-semibold">0.04 °/s</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-on-surface-variant">Wheel Tick Scale</span>
+<span class="font-semibold text-primary">0.9984 (Fused)</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-on-surface-variant">Magnetometer Hard/Soft</span>
+<span class="text-on-surface font-medium">Compensated (Low)</span>
+</div>
+<div class="flex items-center justify-between py-1.5">
+<span class="text-on-surface-variant">IMU Cross-Axis Coupling</span>
+<span class="font-semibold">&lt; 0.05%</span>
+</div>
+</div>
+</div>
+<!-- Failure & Recovery Diagnostics -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant/40">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface">Recovery Diagnostics</span>
+<span class="material-symbols-outlined text-[15px] text-primary">verified</span>
+</div>
+<div class="flex flex-col gap-space-xs text-on-surface font-label-sm text-label-sm">
+<div class="p-space-xs bg-surface-container-low rounded flex items-center justify-between">
+<span class="text-on-surface-variant">Avg Re-stabilization</span>
+<span class="font-semibold text-primary">1.4 s post-GNSS</span>
+</div>
+<div class="p-space-xs bg-surface-container-low rounded flex items-center justify-between">
+<span class="text-on-surface-variant">Zero Velocity (ZUPT)</span>
+<span class="font-semibold text-on-surface">14 instances</span>
+</div>
+<div class="p-space-xs bg-surface-container-low rounded flex items-center justify-between">
+<span class="text-on-surface-variant">Non-Holonomic Constraint</span>
+<span class="font-semibold text-primary">Active (Kinematic)</span>
+</div>
+<div class="p-space-xs bg-surface-container-low rounded flex items-center justify-between">
+<span class="text-on-surface-variant">Kalman Innovation Cov</span>
+<span class="font-semibold text-on-surface">Bounded (&lt;1.8σ)</span>
+</div>
+</div>
+</div>
+<!-- Secondary Diagnostics Quick Actions -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md uppercase font-semibold text-on-surface mb-1">Audit Operations</span>
+<button class="w-full h-8 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded flex items-center justify-between transition-colors" type="button">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[15px] text-outline">archive</span>
+<span>Download Diagnostic Bundle</span>
+</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant">24.8 MB</span>
+</button>
+<button class="w-full h-8 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm rounded flex items-center justify-between transition-colors" type="button">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[15px] text-outline">picture_as_pdf</span>
+<span>Generate PDF Summary</span>
+</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<button class="w-full h-8 px-space-md bg-surface-container-high hover:bg-surface-dim text-on-surface font-body-sm text-body-sm rounded flex items-center justify-between transition-colors" type="button">
+<span class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[15px] text-primary">compare_arrows</span>
+<span class="font-medium">Compare with Baseline v4.1</span>
+</span>
+<span class="text-[10px] font-label-sm text-primary font-bold">+18.4%</span>
+</button>
+</div>
+</aside>
+</div>
+</section>
+</div>
+<script>
+  // Trajectory Layer Toggles micro-interaction
+  document.addEventListener('DOMContentLoaded', () => {
+    const bindToggle = (chkId, layerId) => {
+      const chk = document.getElementById(chkId);
+      const layer = document.getElementById(layerId);
+      if (chk && layer) {
+        chk.addEventListener('change', () => {
+          layer.style.display = chk.checked ? 'inline' : 'none';
+        });
+      }
+    };
+
+    bindToggle('chk-gt', 'layer-ground-truth');
+    bindToggle('chk-raw', 'layer-raw-imu');
+    bindToggle('chk-ai', 'layer-ai-corrected');
+    bindToggle('chk-mm', 'layer-map-matched');
+    bindToggle('chk-err', 'layer-error-zones');
+
+    // Recenter map micro-animation
+    const btnRecenter = document.getElementById('btn-recenter');
+    const svg = document.getElementById('route-canvas');
+    if (btnRecenter && svg) {
+      btnRecenter.addEventListener('click', () => {
+        svg.style.transition = 'transform 0.3s ease';
+        svg.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          svg.style.transform = 'scale(1)';
+        }, 300);
+      });
+    }
+  });
+</script></main><footer class="w-full bg-surface-container-lowest border-t border-outline-variant/40 py-space-md"><div class="w-full px-margin flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm"><span>VOYAGER Edge Telemetry &amp; Spatial Systems</span><span>Autonomous Route Validation Protocol © 2025</span></div></footer></body></html>

@@ -6,11 +6,21 @@ and GNSS fixes with vehicle scale factor adaptation.
 """
 
 import logging
-from typing import Optional, Tuple, Dict
+import math
+from typing import Optional, Tuple, Dict, Any
 
 import numpy as np
 
+from modules.sensor_types import GnssSample, GnssValidity
+
 logger = logging.getLogger("iNAV.ukf")
+
+UKF_EARTH_RADIUS = 6371000.0
+UKF_NIS_GATE_2D = 9.21                 # Chi-Square 2-DOF 99% threshold
+UKF_NIS_GATE_1D = 6.635                # Chi-Square 1-DOF 99% threshold
+UKF_MIN_HEADING_SPEED = 2.5            # Minimum speed (m/s) for course/heading update
+UKF_DEFAULT_SPEED_SIGMA = 0.5          # Baseline 1-sigma speed noise (m/s)
+UKF_DEFAULT_HEADING_SIGMA_DEG = 3.0    # Baseline 1-sigma course noise (deg)
 
 
 class UKFNavigationFilter:
@@ -83,6 +93,10 @@ class UKFNavigationFilter:
         init_accel_bias: float = 0.0
     ) -> None:
         """Initialize filter states at reference origin."""
+        self.ref_lat = init_lat
+        self.ref_lon = init_lon
+        self.is_initialized = True
+
         self.x[0] = 0.0  # p_N
         self.x[1] = 0.0  # p_E
         self.x[2] = max(init_speed_ms, 0.0)
@@ -177,8 +191,9 @@ class UKFNavigationFilter:
         z: np.ndarray,
         h_func,
         R: np.ndarray,
-        is_angle_measurement: bool = False
-    ) -> None:
+        is_angle_measurement: bool = False,
+        nis_gate: Optional[float] = None
+    ) -> Tuple[bool, float]:
         """
         Generic UKF measurement update for observation vector z.
         h_func takes a sigma point and returns predicted measurement vector.
@@ -217,13 +232,20 @@ class UKFNavigationFilter:
 
         P_zz += R
 
-        # Kalman gain
-        K = P_xz @ np.linalg.inv(P_zz)
-
         # Innovation
         y = z - z_pred
         if is_angle_measurement:
             y[0] = (y[0] + np.pi) % (2.0 * np.pi) - np.pi
+
+        # Compute Normalized Innovation Squared (NIS)
+        P_zz_inv = np.linalg.inv(P_zz)
+        nis = float(y.T @ P_zz_inv @ y)
+
+        if nis_gate is not None and nis > nis_gate:
+            return False, nis
+
+        # Kalman gain
+        K = P_xz @ P_zz_inv
 
         # State update
         dx_update = K @ y
@@ -235,6 +257,7 @@ class UKFNavigationFilter:
         # Covariance update
         self.P -= K @ P_zz @ K.T
         self.P = 0.5 * (self.P + self.P.T)
+        return True, nis
 
     def update_velocity_net(
         self,
@@ -290,6 +313,154 @@ class UKFNavigationFilter:
 
         self.update_measurement(np.array([gyro_reading]), h_gyro, np.array([[1e-4]]))
 
+    def compute_pos_nis(
+        self,
+        p_N: float,
+        p_E: float,
+        accuracy_m: float,
+        r_scale: float = 1.0
+    ) -> float:
+        """
+        Computes 2D position Normalized Innovation Squared (NIS) without state update.
+        """
+        sigma_pos = max(accuracy_m, 1.0)
+        R_diag = (sigma_pos**2) * max(r_scale, 1.0)
+
+        S00 = self.P[0, 0] + R_diag
+        S01 = self.P[0, 1]
+        S10 = self.P[1, 0]
+        S11 = self.P[1, 1] + R_diag
+
+        det = S00 * S11 - S01 * S10
+        if det < 1e-12:
+            return 999999.0
+        inv_det = 1.0 / det
+
+        S_inv00 = S11 * inv_det
+        S_inv01 = -S01 * inv_det
+        S_inv10 = -S10 * inv_det
+        S_inv11 = S00 * inv_det
+
+        y0 = p_N - self.x[0]
+        y1 = p_E - self.x[1]
+
+        return float(y0 * (S_inv00 * y0 + S_inv01 * y1) + y1 * (S_inv10 * y0 + S_inv11 * y1))
+
+    def update_gnss_pos(
+        self,
+        p_N: float,
+        p_E: float,
+        accuracy_m: float,
+        r_scale: float = 1.0
+    ) -> Tuple[bool, float]:
+        """
+        2D GNSS Position Measurement Update with Innovation Gating (NIS).
+        Gate: NIS <= 9.21 (Chi-square 2-DOF 99%)
+        """
+        sigma_pos = max(accuracy_m, 1.0)
+        R_diag = (sigma_pos**2) * max(r_scale, 1.0)
+        R = np.diag([R_diag, R_diag])
+
+        def h_pos(s):
+            return np.array([s[0], s[1]])
+
+        z = np.array([p_N, p_E])
+        accepted, nis = self.update_measurement(z, h_pos, R, nis_gate=UKF_NIS_GATE_2D)
+        return accepted, nis
+
+    def update_gnss_speed(
+        self,
+        v_gnss: float,
+        sigma_v: float = UKF_DEFAULT_SPEED_SIGMA,
+        r_scale: float = 1.0
+    ) -> Tuple[bool, float]:
+        """
+        GNSS Ground Speed Update with Innovation Gating (NIS).
+        Gate: NIS <= 6.635 (Chi-square 1-DOF 99%)
+        """
+        R_val = (sigma_v**2) * max(r_scale, 1.0)
+        R = np.array([[R_val]])
+
+        def h_spd(s):
+            return np.array([s[2]])
+
+        z = np.array([v_gnss])
+        accepted, nis = self.update_measurement(z, h_spd, R, nis_gate=UKF_NIS_GATE_1D)
+        return accepted, nis
+
+    def update_gnss_course(
+        self,
+        psi_gnss_rad: float,
+        v_gnss: float,
+        sigma_psi_rad: float = np.radians(UKF_DEFAULT_HEADING_SIGMA_DEG),
+        r_scale: float = 1.0
+    ) -> Tuple[bool, float]:
+        """
+        GNSS Course / Heading Update with Speed Gating & Innovation Gating.
+        Gate: v_gnss > 2.5 m/s and NIS <= 6.635 (Chi-square 1-DOF 99%)
+        """
+        if v_gnss <= UKF_MIN_HEADING_SPEED:
+            return False, 0.0
+
+        R_val = (sigma_psi_rad**2) * max(r_scale, 1.0)
+        R = np.array([[R_val]])
+
+        def h_hdg(s):
+            return np.array([s[3]])
+
+        z = np.array([psi_gnss_rad])
+        accepted, nis = self.update_measurement(z, h_hdg, R, is_angle_measurement=True, nis_gate=UKF_NIS_GATE_1D)
+        return accepted, nis
+
+    def update_gnss_sample(
+        self,
+        sample: GnssSample,
+        health_mgr: Any
+    ) -> Tuple[bool, Dict[str, bool]]:
+        """
+        Canonical GNSS sample update integrated with GNSS Health Manager.
+        """
+        results = {"pos": False, "speed": False, "course": False}
+
+        if not health_mgr.validate_sample(sample):
+            health_mgr.on_measurement_rejected()
+            return False, results
+
+        d_lat = np.radians(sample.latitude_deg - self.ref_lat)
+        d_lon = np.radians(sample.longitude_deg - self.ref_lon)
+        ref_lat_rad = np.radians(self.ref_lat)
+        p_N = UKF_EARTH_RADIUS * d_lat
+        p_E = UKF_EARTH_RADIUS * d_lon * np.cos(ref_lat_rad)
+
+        if int(health_mgr.state) == 0:  # PURE_DR
+            health_mgr.start_quarantine()
+
+        candidate_nis = self.compute_pos_nis(p_N, p_E, sample.horizontal_accuracy_m)
+        if candidate_nis > health_mgr.config.nis_pos_2d_threshold:
+            health_mgr.on_measurement_rejected()
+            return False, results
+
+        can_update, r_scale = health_mgr.process_candidate(sample)
+        if not can_update:
+            return False, results
+
+        p_ok, _ = self.update_gnss_pos(p_N, p_E, sample.horizontal_accuracy_m, r_scale)
+        results["pos"] = p_ok
+        if not p_ok:
+            health_mgr.on_measurement_rejected()
+            return False, results
+
+        if sample.validity & GnssValidity.SPEED_VALID:
+            s_ok, _ = self.update_gnss_speed(sample.speed_mps, UKF_DEFAULT_SPEED_SIGMA, r_scale)
+            results["speed"] = s_ok
+
+        if sample.validity & GnssValidity.BEARING_VALID:
+            bearing_rad = np.radians(sample.bearing_deg)
+            c_ok, _ = self.update_gnss_course(bearing_rad, sample.speed_mps, np.radians(UKF_DEFAULT_HEADING_SIGMA_DEG), r_scale)
+            results["course"] = c_ok
+
+        return True, results
+
     def update_gnss(
         self,
         p_N_gnss: float,
@@ -297,33 +468,95 @@ class UKFNavigationFilter:
         v_gnss: float,
         psi_gnss: Optional[float] = None,
         pos_accuracy_m: float = 3.0,
-        inflation_factor: float = 1.0
-    ) -> None:
+        r_scale: float = 1.0
+    ) -> bool:
         """
-        GNSS Position and Velocity Update.
-        Also updates adaptive vehicle scale factor k.
+        GNSS Position and Velocity Update with NIS gating.
         """
-        pos_var = (max(pos_accuracy_m, 1.0) * inflation_factor)**2
-        spd_var = 0.25 * inflation_factor
+        p_ok, _ = self.update_gnss_pos(p_N_gnss, p_E_gnss, pos_accuracy_m, r_scale)
+        if not p_ok:
+            return False
 
-        # 1. Position update: [p_N, p_E]
-        def h_pos(s):
-            return np.array([s[0], s[1]])
+        self.update_gnss_speed(v_gnss, UKF_DEFAULT_SPEED_SIGMA, r_scale)
+        if psi_gnss is not None:
+            self.update_gnss_course(psi_gnss, v_gnss, np.radians(UKF_DEFAULT_HEADING_SIGMA_DEG), r_scale)
+        return True
 
-        z_pos = np.array([p_N_gnss, p_E_gnss])
-        R_pos = np.diag([pos_var, pos_var])
-        self.update_measurement(z_pos, h_pos, R_pos)
+    def update_map_match(
+        self,
+        p_N_match: float,
+        p_E_match: float,
+        psi_road: float,
+        confidence: float,
+        is_heading_valid: bool = False
+    ) -> Tuple[bool, float, Optional[float]]:
+        """
+        Probabilistic Map Measurement Update (Pillar 5).
+        Fuses 1D cross-track road position constraint and optional road heading into the 7-state UKF.
+        Features:
+        - 1D cross-track normal constraint: preserves along-track variance and VelocityNet speed
+        - Confidence-scaled measurement covariance: R_ct = (sigma_base / confidence)^2
+        - 1-DOF Chi-Square NIS innovation gating (threshold 6.635)
+        - Optional road-aligned heading constraint when speed > 2.5 m/s, confidence > 0.7, |d_hdg| < 15 deg
+        """
+        if not self.is_initialized:
+            return False, 0.0, None
 
-        # 2. Speed update: v_fwd
-        def h_spd(s):
-            return np.array([s[2]])
+        if confidence < 0.25:
+            return False, 0.0, None
 
-        self.update_measurement(np.array([v_gnss]), h_spd, np.array([[spd_var]]))
+        # Unit normal vector perpendicular to road: n = [-sin(psi_road), cos(psi_road)]
+        n_N = -math.sin(psi_road)
+        n_E =  math.cos(psi_road)
 
-        # 3. Heading update if vehicle is moving at reasonable speed
-        if psi_gnss is not None and v_gnss > 2.5:
-            def h_hdg(s):
-                return np.array([s[3]])
+        # Cross-track residual along normal vector
+        y_ct = float(n_N * (p_N_match - self.x[0]) + n_E * (p_E_match - self.x[1]))
 
-            hdg_var = (np.radians(3.0) * inflation_factor)**2
-            self.update_measurement(np.array([psi_gnss]), h_hdg, np.array([[hdg_var]]), is_angle_measurement=True)
+        sigma_base = 2.5
+        sigma_map = sigma_base / max(confidence, 0.25)
+        R_ct = float(sigma_map**2)
+
+        # 1-DOF innovation variance
+        S = float(n_N**2 * self.P[0, 0] + 2.0 * n_N * n_E * self.P[0, 1] + n_E**2 * self.P[1, 1] + R_ct)
+        if S < 1e-12:
+            return False, 0.0, None
+
+        nis = float((y_ct**2) / S)
+
+        # 1-DOF Chi-Square NIS gating (threshold 6.635 at p=0.01)
+        if nis > UKF_NIS_GATE_1D:
+            return False, nis, None
+
+        # Kalman gain strictly for position states
+        K_N = float((self.P[0, 0] * n_N + self.P[0, 1] * n_E) / S)
+        K_E = float((self.P[1, 0] * n_N + self.P[1, 1] * n_E) / S)
+
+        self.x[0] += K_N * y_ct
+        self.x[1] += K_E * y_ct
+
+        # Covariance update strictly along road normal
+        K_vec = np.zeros(self.dim_x)
+        K_vec[0] = K_N
+        K_vec[1] = K_E
+        self.P -= S * np.outer(K_vec, K_vec)
+        self.P = 0.5 * (self.P + self.P.T)
+        for i in range(self.dim_x):
+            self.P[i, i] = max(self.P[i, i], 1e-8)
+
+        hdg_nis = None
+        if is_heading_valid and self.x[2] > UKF_MIN_HEADING_SPEED and confidence > 0.7:
+            d_hdg = abs((self.x[3] - psi_road + np.pi) % (2.0 * np.pi) - np.pi)
+            if d_hdg < np.radians(15.0):
+                hdg_sigma = np.radians(UKF_DEFAULT_HEADING_SIGMA_DEG) / max(confidence, 0.5)
+                R_hdg = np.array([[hdg_sigma**2]])
+
+                def h_hdg(s):
+                    return np.array([s[3]])
+
+                z_hdg = np.array([psi_road])
+                hdg_accepted, hdg_nis = self.update_measurement(
+                    z_hdg, h_hdg, R_hdg, is_angle_measurement=True, nis_gate=UKF_NIS_GATE_1D
+                )
+
+        return True, nis, hdg_nis
+

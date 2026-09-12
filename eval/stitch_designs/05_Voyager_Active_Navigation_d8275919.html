@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Voyager Navigation</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Font: Inter & SF Pro Display aesthetic -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Custom Configuration -->
+<script data-purpose="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            moss: {
+              850: '#2d3816',
+              900: '#222b10',
+            },
+            trail: '#4ade80',
+            route: '#38e1b0',
+            accentCoral: '#f97316'
+          }
+        }
+      }
+    }
+  </script>
+<!-- Component & Map Graphic Styles -->
+<style data-purpose="map-styling">
+    /* Urban Grid SVG styling */
+    .map-bg {
+      background-color: #dedede;
+    }
+    .road-arterial {
+      stroke: #fffbe6;
+      stroke-width: 22;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-arterial-casing {
+      stroke: #d0c8a8;
+      stroke-width: 26;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-avenue {
+      stroke: #ffffff;
+      stroke-width: 14;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-avenue-casing {
+      stroke: #b5b5b5;
+      stroke-width: 17;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .road-minor {
+      stroke: #ffffff;
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+    .road-minor-casing {
+      stroke: #c8c8c8;
+      stroke-width: 10;
+      stroke-linecap: round;
+    }
+    .trail-line {
+      stroke: #2dd4bf;
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 2px 4px rgba(45,212,191,0.45));
+    }
+    .trail-line-secondary {
+      stroke: #5eead4;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 6 4;
+    }
+    .building-block {
+      fill: #ebe7df;
+      stroke: #d8d3c5;
+      stroke-width: 1;
+    }
+    .park-block {
+      fill: #cfe8d5;
+      stroke: #b5d8bd;
+      stroke-width: 1.5;
+    }
+    .transit-rail {
+      stroke: #8e959e;
+      stroke-width: 2.5;
+      stroke-dasharray: 4 4;
+    }
+  </style>
+<style data-purpose="animations">
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(0.9); opacity: 0; }
+    }
+    .puck-pulse {
+      animation: pulse-ring 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+      transform-origin: center;
+    }
+  </style>
+</head>
+<body class="h-full bg-neutral-900 text-slate-800 antialiased font-sans flex justify-center items-center">
+<!-- BEGIN: MobileDeviceFrame -->
+<main class="relative w-full max-w-[430px] h-[932px] max-h-screen bg-white overflow-hidden shadow-2xl flex flex-col select-none" data-purpose="voyager-mobile-screen">
+<!-- BEGIN: HeaderAndTurnGuidance -->
+<header class="bg-[#2d3816] text-white pt-3 pb-5 px-6 z-20 shadow-md flex-shrink-0" data-purpose="guidance-header">
+<!-- iOS Status Bar -->
+<div class="flex justify-between items-center text-sm font-semibold tracking-tight pt-1 pb-3 text-white" data-purpose="ios-status-bar">
+<!-- Clock & Location Services Active -->
+<div class="flex items-center space-x-1 pl-1">
+<span class="text-[15px] font-bold tracking-tight">9:41</span>
+<svg class="w-3.5 h-3.5 fill-white rotate-45 ml-0.5" viewbox="0 0 24 24">
+<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"></path>
+</svg>
+</div>
+<!-- Hardware Status Icons -->
+<div class="flex items-center space-x-2 pr-1">
+<!-- Cellular Signal Bars -->
+<svg class="w-4 h-3.5 fill-white" viewbox="0 0 24 24">
+<rect height="7" rx="1" width="3" x="2" y="14"></rect>
+<rect height="11" rx="1" width="3" x="7" y="10"></rect>
+<rect height="15" rx="1" width="3" x="12" y="6"></rect>
+<rect height="19" rx="1" width="3" x="17" y="2"></rect>
+</svg>
+<!-- Wi-Fi Icon -->
+<svg class="w-4 h-4 fill-white" viewbox="0 0 24 24">
+<path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98A16.88 16.88 0 0 0 12 4zm0 2.9c3.8 0 7.27 1.44 9.9 3.84L12 19.62 2.1 10.74C4.73 8.34 8.2 6.9 12 6.9z"></path>
+</svg>
+<!-- Battery Icon -->
+<div class="flex items-center">
+<div class="w-6 h-3 border-2 border-white rounded-[4px] p-0.5 flex items-center">
+<div class="h-full w-full bg-white rounded-sm"></div>
+</div>
+<div class="w-0.5 h-1.5 bg-white rounded-r-sm"></div>
+</div>
+</div>
+</div>
+<!-- Turn-by-Turn Instruction Banner -->
+<div class="flex items-center space-x-4 pt-1 pb-1">
+<!-- Straight Navigation Arrow -->
+<div class="flex-shrink-0" data-purpose="nav-arrow-indicator">
+<svg class="w-10 h-10 text-white fill-current transform scale-110 drop-shadow-sm" viewbox="0 0 24 24">
+<path d="M11 20V7.83l-3.59 3.58L6 10l6-6 6 6-1.41 1.41L13 7.83V20h-2z"></path>
+</svg>
+</div>
+<!-- Directional Text -->
+<div class="flex-1">
+<h1 class="text-[31px] leading-tight font-extrabold tracking-tight text-white drop-shadow-sm">
+            Follow the map
+          </h1>
+</div>
+</div>
+</header>
+<!-- END: HeaderAndTurnGuidance -->
+<!-- BEGIN: TelemetryAndSpeedHUD -->
+<section class="relative bg-white z-20 border-b border-slate-200/80 shadow-[0_4px_12px_rgba(0,0,0,0.06)] px-8 pt-3.5 pb-2.5" data-purpose="telemetry-dashboard">
+<div class="grid grid-cols-2 divide-x divide-slate-200">
+<!-- Current Speed -->
+<div class="text-left pr-4">
+<div class="flex items-baseline space-x-1.5">
+<span class="text-4xl font-extrabold text-slate-900 tracking-tight">0.0</span>
+<span class="text-sm font-semibold text-slate-600 lowercase tracking-normal">mph</span>
+</div>
+<span class="block text-xs font-semibold text-slate-600 mt-0.5 tracking-tight">Current Speed</span>
+</div>
+<!-- Average Speed -->
+<div class="text-left pl-6">
+<div class="flex items-baseline space-x-1.5">
+<span class="text-4xl font-light text-slate-900 leading-none tracking-tight">―</span>
+<span class="text-sm font-semibold text-slate-600 lowercase tracking-normal">mph</span>
+</div>
+<span class="block text-xs font-semibold text-slate-600 mt-0.5 tracking-tight">Average Speed</span>
+</div>
+</div>
+<!-- Carousel Pagination Dots -->
+<div class="flex justify-center items-center space-x-1.5 mt-2.5" data-purpose="carousel-dots">
+<span class="w-1.5 h-1.5 rounded-full bg-[#3d4d1e]"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+</div>
+</section>
+<!-- END: TelemetryAndSpeedHUD -->
+<!-- BEGIN: InteractiveMapViewport -->
+<section class="relative flex-1 w-full h-full overflow-hidden map-bg" data-purpose="map-viewport">
+<!-- Vector Scaled Map Rendering (Urban San Francisco Grid Styling) -->
+<svg class="absolute inset-0 w-full h-full select-none" preserveaspectratio="xMidYMid slice" viewbox="0 0 500 750" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Transit Bus/Cable Car Icon Marker Pattern -->
+<g id="transit-stop">
+<circle cx="0" cy="0" fill="#475569" r="8.5" stroke="#ffffff" stroke-width="1.8"></circle>
+<path d="M-4 -4 h8 v6 h-8 z M-3 4 v1.5 M3 4 v1.5 M-2 -1.5 h4" fill="none" stroke="#ffffff" stroke-width="0.8"></path>
+</g>
+<!-- Destination Point Marker -->
+<g id="poi-pin">
+<circle cx="0" cy="0" fill="#e75b27" r="13" shadow="drop-shadow(0 2px 4px rgba(0,0,0,0.3))" stroke="#ffffff" stroke-width="2.5"></circle>
+<path d="M-3 -4 h6 a3 3 0 0 1 3 3 c0 3 -6 8 -6 8 s-6 -5 -6 -8 a3 3 0 0 1 3 -3 z" fill="#ffffff" transform="scale(0.8) translate(-0.5,-1)"></path>
+</g>
+<g id="walker-poi">
+<circle cx="0" cy="0" fill="#e75b27" r="14" stroke="#ffffff" stroke-width="2.5"></circle>
+<circle cx="0" cy="-4" fill="#ffffff" r="2.2"></circle>
+<path d="M-2.5 -1 h5 l1.5 5.5 l-2 1.5 l-0.8 -3.2 l-1.2 4.2 l-2.5 -0.5 l1.5 -5z" fill="#ffffff"></path>
+</g>
+</defs>
+<!-- City Blocks / Parcels -->
+<!-- Urban Blocks -->
+<polygon class="building-block" points="-50,-20 180,-120 140,90 -60,180"></polygon>
+<polygon class="building-block" points="175,-140 380,-240 340,30 150,110"></polygon>
+<polygon class="building-block" points="120,130 330,30 270,180 80,260"></polygon>
+<polygon class="building-block" points="60,280 250,190 200,320 20,390"></polygon>
+<!-- Union Square Park Area -->
+<polygon class="park-block" points="90,380 230,300 170,490 20,550"></polygon>
+<polygon fill="#a4d5b2" opacity="0.6" points="110,400 210,330 165,470 50,530"></polygon>
+<rect fill="#d5e8dc" height="60" stroke="#9bc7a8" stroke-width="1" transform="rotate(-32 130 450)" width="70" x="95" y="420"></rect>
+<!-- Extended Blocks South & East -->
+<polygon class="building-block" points="230,330 460,210 390,440 180,520"></polygon>
+<polygon class="building-block" points="160,540 370,450 310,670 110,740"></polygon>
+<polygon class="building-block" points="-40,580 140,510 70,720 -80,780"></polygon>
+<!-- Minor Street Patterns (Casing & Inner) -->
+<g class="road-minor-casing">
+<line x1="-30" x2="320" y1="360" y2="200"></line>
+<line x1="80" x2="280" y1="120" y2="220"></line>
+<line x1="160" x2="380" y1="460" y2="340"></line>
+<line x1="20" x2="320" y1="620" y2="460"></line>
+</g>
+<g class="road-minor">
+<line x1="-30" x2="320" y1="360" y2="200"></line>
+<line x1="80" x2="280" y1="120" y2="220"></line>
+<line x1="160" x2="380" y1="460" y2="340"></line>
+<line x1="20" x2="320" y1="620" y2="460"></line>
+</g>
+<!-- Transit Rails -->
+<line class="transit-rail" x1="260" x2="480" y1="0" y2="180"></line>
+<line class="transit-rail" x1="140" x2="440" y1="180" y2="440"></line>
+<line class="transit-rail" x1="20" x2="280" y1="320" y2="560"></line>
+<!-- Major Diagonal Avenues & Arterials (Market Street & Cross streets) -->
+<!-- Market St diagonal orientation -->
+<line class="road-arterial-casing" x1="380" x2="560" y1="-80" y2="180"></line>
+<line class="road-arterial" x1="380" x2="560" y1="-80" y2="180"></line>
+<!-- Powell & Stockton Cross-Arterials -->
+<line class="road-avenue-casing" x1="-40" x2="550" y1="100" y2="-170"></line>
+<line class="road-avenue" x1="-40" x2="550" y1="100" y2="-170"></line>
+<line class="road-avenue-casing" x1="-40" x2="550" y1="320" y2="30"></line>
+<line class="road-avenue" x1="-40" x2="550" y1="320" y2="30"></line>
+<line class="road-arterial-casing" x1="-50" x2="560" y1="560" y2="280"></line>
+<line class="road-arterial" x1="-50" x2="560" y1="560" y2="280"></line>
+<line class="road-avenue-casing" x1="20" x2="580" y1="780" y2="500"></line>
+<line class="road-avenue" x1="20" x2="580" y1="780" y2="500"></line>
+<!-- Cross Diagonal Streets (Geary, Post, Sutter) -->
+<line class="road-avenue-casing" x1="30" x2="480" y1="-80" y2="820"></line>
+<line class="road-avenue" x1="30" x2="480" y1="-80" y2="820"></line>
+<line class="road-arterial-casing" x1="-120" x2="350" y1="80" y2="880"></line>
+<line class="road-arterial" x1="-120" x2="350" y1="80" y2="880"></line>
+<line class="road-minor-casing" x1="220" x2="580" y1="-100" y2="580"></line>
+<line class="road-minor" x1="220" x2="580" y1="-100" y2="580"></line>
+<!-- ACTIVE NAV ROUTE: The Barbary Coast Trail Highlight (Mint / Cyan route) -->
+<path class="trail-line" d="M-20,290 L185,190 L248,300 L490,425"></path>
+<path class="trail-line-secondary" d="M-20,290 L185,190 L248,300 L490,425"></path>
+<!-- Trail Route Label rotated along path -->
+<text fill="#115e59" font-size="11.5" font-weight="700" letter-spacing="0.2" transform="translate(258, 335) rotate(26)">
+          The Barbary Coast Trail
+        </text>
+<!-- Street Names & Location Labels on Map -->
+<text fill="#c2410c" font-size="12" font-weight="600" text-anchor="middle" x="440" y="195">Market St</text>
+<text fill="#c2410c" font-size="12" font-weight="600" text-anchor="middle" x="445" y="235">Powell St Terminus</text>
+<text fill="#1e293b" font-size="13" font-weight="700" text-anchor="middle" x="240" y="230">Union Square /</text>
+<text fill="#1e293b" font-size="13" font-weight="700" text-anchor="middle" x="240" y="246">Market Street</text>
+<text fill="#c2410c" font-size="12" font-weight="600" x="80" y="280">Union Square</text>
+<text fill="#1e293b" font-size="12" font-weight="600" x="175" y="275">Union Square</text>
+<text fill="#c2410c" font-size="12" font-weight="600" x="65" y="355">Union Square</text>
+<text fill="#c2410c" font-size="12" font-weight="600" x="65" y="370">San Francisco</text>
+<text fill="#c2410c" font-size="12" font-weight="600" x="170" y="375">Cable Car Museum</text>
+<!-- Transit Stop Icons Placed along streets -->
+<use href="#transit-stop" x="135" y="238"></use>
+<use href="#transit-stop" x="135" y="258"></use>
+<use href="#transit-stop" x="245" y="220"></use>
+<use href="#transit-stop" x="220" y="306"></use>
+<use href="#transit-stop" x="260" y="342"></use>
+<use href="#transit-stop" x="175" y="388"></use>
+<use href="#transit-stop" x="20" y="415"></use>
+<use href="#transit-stop" x="435" y="172"></use>
+<!-- Intermediate Points of Interest Orange Markers -->
+<use href="#walker-poi" x="132" y="282"></use>
+<use href="#walker-poi" x="256" y="375"></use>
+<use href="#poi-pin" x="44" y="380"></use>
+<!-- Minor Route Point Dot -->
+<circle cx="137" cy="356" fill="#f97316" r="4.5" stroke="#ffffff" stroke-width="1.8"></circle>
+<!-- ACTIVE USER LOCATION PUCK (Pulsing Orange Beacon on Route) -->
+<g transform="translate(248, 328)">
+<!-- Dynamic Expanding Pulse -->
+<circle class="puck-pulse" cx="0" cy="0" fill="#ea580c" opacity="0.3" r="22"></circle>
+<!-- Outer Solid White Ring -->
+<circle cx="0" cy="0" fill="#ffffff" filter="drop-shadow(0 3px 6px rgba(0,0,0,0.28))" r="14"></circle>
+<!-- Inner Orange Core Puck -->
+<circle cx="0" cy="0" fill="#f97316" r="8.5"></circle>
+<!-- Heading Micro Pointer -->
+<polygon fill="#ea580c" points="0,-16 -4,-12 4,-12"></polygon>
+</g>
+</svg>
+<!-- BEGIN: FloatingControlWidgets -->
+<!-- Right Side Floating Buttons (Camera & Compass) -->
+<aside class="absolute right-4 top-52 flex flex-col space-y-3 z-30" data-purpose="floating-action-buttons">
+<!-- Snapshot / Camera Action Button -->
+<button aria-label="Take Map Photo" class="w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-95 transition-transform text-slate-800 focus:outline-none">
+<svg class="w-6 h-6 stroke-2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Compass / North Bearing Indicator Button -->
+<button aria-label="Reset Orientation" class="w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-95 transition-transform focus:outline-none">
+<div class="relative w-8 h-8 flex items-center justify-center">
+<!-- Left Arrow Pointer (Red / North) -->
+<svg class="absolute -left-0.5 w-3 h-3 text-red-500 fill-current" viewbox="0 0 24 24">
+<path d="M14 20l-10-8 10-8v16z"></path>
+</svg>
+<!-- North Indicator Letter 'N' -->
+<span class="font-black text-slate-800 text-xs tracking-tighter">N</span>
+<!-- Right Arrow Pointer (Slate) -->
+<svg class="absolute -right-0.5 w-3 h-3 text-slate-400 fill-current" viewbox="0 0 24 24">
+<path d="M10 4l10 8-10 8V4z"></path>
+</svg>
+</div>
+</button>
+<!-- Community / Group Icon Button (lower-right) -->
+<div class="pt-6">
+<button aria-label="Community &amp; Group Layer" class="w-14 h-14 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-95 transition-transform text-slate-700 focus:outline-none">
+<svg class="w-6 h-6 stroke-[2.2]" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</aside>
+<!-- END: FloatingControlWidgets -->
+<!-- BEGIN: BottomNotificationToast -->
+<!-- Floating Status Pill Banner -->
+<div class="absolute bottom-20 inset-x-4 flex justify-center z-30 pointer-events-none" data-purpose="status-notification-toast">
+<div class="w-full bg-[#3d3e3cd9] backdrop-blur-md text-white px-5 py-3.5 rounded-2xl shadow-xl border border-white/10 flex items-center justify-start pointer-events-auto">
+<p class="text-[15px] font-medium tracking-tight text-neutral-100">
+            Update sent to device.
+          </p>
+</div>
+</div>
+<!-- END: BottomNotificationToast -->
+<!-- BEGIN: BottomNavigationDock -->
+<!-- Bottom App Bar with Info & "Controls" Trigger Pill -->
+<div class="absolute bottom-4 inset-x-4 flex items-center justify-between z-30" data-purpose="bottom-bar-actions">
+<!-- Info Button ('i' icon button) -->
+<button aria-label="Route Information" class="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-slate-300/80 text-slate-700 flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+<svg class="w-5 h-5 stroke-2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+<path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+</button>
+<!-- Primary Controls Pill Button (Center) -->
+<button class="px-8 py-3 bg-[#2d3816] hover:bg-[#232c11] active:scale-95 text-white font-bold text-base rounded-2xl shadow-lg border border-white/10 tracking-tight transition-all duration-150" data-purpose="open-controls-sheet">
+          Controls
+        </button>
+<!-- Right Spacer Balancing Info Button -->
+<div class="w-10 h-10"></div>
+</div>
+<!-- END: BottomNavigationDock -->
+<!-- iOS Home Indicator -->
+<div class="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none z-40">
+<div class="w-36 h-1 bg-black/40 rounded-full"></div>
+</div>
+</section>
+<!-- END: InteractiveMapViewport -->
+</main>
+<!-- END: MobileDeviceFrame -->
+</body></html>

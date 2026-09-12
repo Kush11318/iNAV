@@ -43,7 +43,16 @@ object NativeBridge {
 
     external fun nativeInit(modelPath: String): Boolean
     external fun nativeReset(initLat: Double, initLon: Double, initSpeedMs: Double, initHeadingDeg: Double)
-    external fun nativeUpdateGnss(lat: Double, lon: Double, speedMs: Double, headingDeg: Double)
+    external fun nativeUpdateGnss(
+        lat: Double,
+        lon: Double,
+        speedMs: Double,
+        headingDeg: Double,
+        accuracyM: Double,
+        timestampNs: Long
+    ): Boolean
+
+    external fun nativeGetGnssHealthState(): Int
     external fun nativeSetScaleFactor(scaleK: Double)
     external fun nativeProcessImu(
         ax: Float, ay: Float, az: Float,

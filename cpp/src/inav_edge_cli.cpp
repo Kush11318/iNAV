@@ -93,7 +93,7 @@ public:
                 }
             } else {
                 // Feed GNSS fix
-                filter_.initialize(s.gnss_lat, s.gnss_lon, s.gnss_speed_ms, s.gnss_heading_deg);
+                filter_.update_gnss(s.gnss_lat, s.gnss_lon, s.gnss_speed_ms, s.gnss_heading_deg);
             }
         }
 
