@@ -1,0 +1,15 @@
+scenario,duration_s,category,fpe_a_can,fpe_b_17a,fpe_c30,fpe_c35,delta_c30_vs_b,delta_c35_vs_b,hdg_rej_c30,hdg_rej_c35,abstain_pct,first_gate_t,gate_dur,catastrophic_prevented,useful_lost,trajectory_behavior
+vw14b_o5,180,E,719.25,2063.45,1876.53,1876.53,-186.91999999999985,-186.91999999999985,25,25,73.9,124.5,12.5,YES (Substantial FPE Recovery),Partial,Partially assisted
+vw14c_o4,180,B,1176.55,1375.74,1399.35,1397.71,23.6099999999999,21.970000000000027,160,151,92.2,16.5,80.0,NO (Residual Drift),Partial,Partially assisted
+vw4_o1,120,E,2325.47,2771.09,2771.09,2771.09,0.0,0.0,0,0,91.2,None,0.0,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Partially assisted
+vw16a_o4,120,B,1196.57,1313.22,1211.16,1167.31,-102.05999999999995,-145.91000000000008,75,112,69.2,25.0,37.5,YES (Substantial FPE Recovery),Partial,Followed CAN baseline
+vw11_o3,60,E,369.35,537.11,445.36,501.99,-91.75,-35.120000000000005,69,20,83.3,6.5,34.5,YES (Substantial FPE Recovery),Partial,Partially assisted
+vw8_o1,60,E,72.68,91.5,177.73,175.42,86.22999999999999,83.91999999999999,102,42,89.2,2.5,51.0,NO (Residual Drift),Partial,Partially assisted
+vw3_o3,30,B,131.97,160.02,126.97,126.97,-33.05000000000001,-33.05000000000001,25,25,43.3,17.0,12.5,YES (Substantial FPE Recovery),No,Recovered trajectory
+vw7_o1,30,E,191.13,209.28,182.54,182.54,-26.74000000000001,-26.74000000000001,17,13,55.0,14.5,8.5,YES (Substantial FPE Recovery),No,Recovered trajectory
+vw6_o2,30,E,455.74,468.8,477.95,477.06,9.149999999999977,8.259999999999991,55,48,95.0,1.0,27.5,NO (Residual Drift),Partial,Partially assisted
+vw8_o3,30,E,195.45,208.46,202.82,207.98,-5.640000000000015,-0.4800000000000182,46,26,76.7,6.0,23.0,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Followed CAN baseline
+sample_test_trajectory_motorway_o2,30,B,131.07,133.95,133.85,133.91,-0.09999999999999432,-0.03999999999999204,9,4,15.0,22.5,4.5,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Followed CAN baseline
+vw4_o3,10,D,35.21,49.31,49.31,49.31,0.0,0.0,0,0,45.0,None,0.0,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Followed CAN baseline
+vw2_o2,10,D,6.76,7.23,7.23,7.23,0.0,0.0,0,0,0.0,None,0.0,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Followed CAN baseline
+vw5_o2,10,B,12.32,12.42,12.42,12.42,0.0,0.0,0,0,0.0,None,0.0,YES (Catastrophic Latch Avoided / Safe CAN Fallback),Partial,Followed CAN baseline
