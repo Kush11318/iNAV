@@ -41,7 +41,7 @@ static int g_map_epoch_counter = 0;
 extern "C" {
 
 JNIEXPORT jboolean JNICALL
-Java_com_inav_navigation_NativeBridge_nativeInit(
+Java_com_inav_navigation_NativeBridge_jniInit(
     JNIEnv* env,
     jobject /* this */,
     jstring model_path_jstr
@@ -66,7 +66,7 @@ Java_com_inav_navigation_NativeBridge_nativeInit(
 }
 
 JNIEXPORT void JNICALL
-Java_com_inav_navigation_NativeBridge_nativeReset(
+Java_com_inav_navigation_NativeBridge_jniReset(
     JNIEnv* /* env */,
     jobject /* this */,
     jdouble init_lat,
@@ -96,8 +96,56 @@ Java_com_inav_navigation_NativeBridge_nativeReset(
     g_window_buffer.clear();
 }
 
+JNIEXPORT void JNICALL
+Java_com_inav_navigation_NativeBridge_jniApplyStaticCalibration(
+    JNIEnv* /* env */,
+    jobject /* this */,
+    jdouble ax_mean,
+    jdouble ay_mean,
+    jdouble az_mean,
+    jdouble gx_bias,
+    jdouble gy_bias,
+    jdouble gz_bias
+) {
+    if (g_alignment) {
+        inav::Vec3 a_mean(ax_mean, ay_mean, az_mean);
+        inav::Vec3 g_mean(gx_bias, gy_bias, gz_bias);
+        g_alignment->apply_static_solution(a_mean, g_mean);
+        LOGI("Applied 15s Startup Calibration to AlignmentEngine: gravity=[%.3f, %.3f, %.3f], gyro_bias=[%.5f, %.5f, %.5f] rad/s, Pitch=%.2f deg, Roll=%.2f deg",
+             ax_mean, ay_mean, az_mean, gx_bias, gy_bias, gz_bias,
+             g_alignment->get_result().pitch_deg, g_alignment->get_result().roll_deg);
+    }
+}
+
+JNIEXPORT jdoubleArray JNICALL
+Java_com_inav_navigation_NativeBridge_jniGetAlignmentStatus(
+    JNIEnv* env,
+    jobject /* this */
+) {
+    // Returns [pitch_deg, roll_deg, yaw_deg, confidence, state, gyro_bias_x, gyro_bias_y, gyro_bias_z]
+    jdoubleArray result = env->NewDoubleArray(8);
+    if (!g_alignment) {
+        jdouble zeros[8] = {0,0,0,0,0,0,0,0};
+        env->SetDoubleArrayRegion(result, 0, 8, zeros);
+        return result;
+    }
+    const auto& res = g_alignment->get_result();
+    jdouble buf[8] = {
+        res.pitch_deg,
+        res.roll_deg,
+        res.yaw_deg,
+        res.confidence,
+        static_cast<double>(res.state),
+        res.gyro_bias_body.x,
+        res.gyro_bias_body.y,
+        res.gyro_bias_body.z
+    };
+    env->SetDoubleArrayRegion(result, 0, 8, buf);
+    return result;
+}
+
 JNIEXPORT jboolean JNICALL
-Java_com_inav_navigation_NativeBridge_nativeUpdateGnss(
+Java_com_inav_navigation_NativeBridge_jniUpdateGnss(
     JNIEnv* /* env */,
     jobject /* this */,
     jdouble lat,
@@ -130,7 +178,7 @@ Java_com_inav_navigation_NativeBridge_nativeUpdateGnss(
 }
 
 JNIEXPORT jint JNICALL
-Java_com_inav_navigation_NativeBridge_nativeGetGnssHealthState(
+Java_com_inav_navigation_NativeBridge_jniGetGnssHealthState(
     JNIEnv* /* env */,
     jobject /* this */
 ) {
@@ -138,7 +186,7 @@ Java_com_inav_navigation_NativeBridge_nativeGetGnssHealthState(
 }
 
 JNIEXPORT void JNICALL
-Java_com_inav_navigation_NativeBridge_nativeSetScaleFactor(
+Java_com_inav_navigation_NativeBridge_jniSetScaleFactor(
     JNIEnv* /* env */,
     jobject /* this */,
     jdouble scale_k
@@ -150,7 +198,7 @@ Java_com_inav_navigation_NativeBridge_nativeSetScaleFactor(
 }
 
 JNIEXPORT jdoubleArray JNICALL
-Java_com_inav_navigation_NativeBridge_nativeProcessImu(
+Java_com_inav_navigation_NativeBridge_jniProcessImu(
     JNIEnv* env,
     jobject /* this */,
     jfloat ax, jfloat ay, jfloat az,
