@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -67,6 +69,9 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
         private set
     private var lastObdSpeedKmh: Double? = null
     private var isObdConnected = false
+
+    // Startup Calibration Engine (Phase 12B)
+    val calibrationManager = com.inav.navigation.calibration.StartupCalibrationManager()
 
     // State Flow
     private val _navState = MutableStateFlow(NavigationState())
@@ -201,7 +206,7 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 NotificationManager.IMPORTANCE_LOW
             ).apply { description = "Continuous Dead Reckoning Navigation" }
             val nm = getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(channel)
+            nm?.createNotificationChannel(channel)
         }
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
@@ -211,19 +216,37 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
             .setOngoing(true)
             .build()
 
-        startForeground(1001, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val hasFine = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                val hasCoarse = ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                if (hasFine || hasCoarse) {
+                    startForeground(1001, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+                } else {
+                    startForeground(1001, notification)
+                }
+            } else {
+                startForeground(1001, notification)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
+        }
     }
 
     private fun startSensors() {
-        accelSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
-        linearAccelSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
-        gyroSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
-        gravitySensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
-        pressureSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
-        magSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        rotVectorSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        gameRotVectorSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        lightSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
+        try {
+            accelSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
+            linearAccelSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
+            gyroSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
+            gravitySensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
+            pressureSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
+            magSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+            rotVectorSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+            gameRotVectorSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+            lightSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering sensor listeners: ${e.message}", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -354,6 +377,7 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 lastAx = event.values[0]
                 lastAy = event.values[1]
                 lastAz = event.values[2]
+                calibrationManager.onImuSample(lastAx, lastAy, lastAz, lastGx, lastGy, lastGz, event.timestamp)
             }
             Sensor.TYPE_LINEAR_ACCELERATION -> {
                 lastLinAx = event.values[0]
@@ -365,6 +389,7 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 lastGx = event.values[0]
                 lastGy = event.values[1]
                 lastGz = event.values[2]
+                calibrationManager.onImuSample(lastAx, lastAy, lastAz, lastGx, lastGy, lastGz, event.timestamp)
                 val now = event.timestamp
                 if (lastGyroTimestampNs != 0L && !hasHardwareMag) {
                     val dt = (now - lastGyroTimestampNs) * 1e-9f
@@ -619,9 +644,27 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 val mode = if (isPureDr) NavigationMode.PURE_DR else NavigationMode.AIDED
                 val outageDur = if (isSimulatingOutage) (System.currentTimeMillis() - outageStartTimeMs) / 1000.0 else 0.0
 
-                // Base coordinates: Authoritative fused estimator output (estLat, estLon)
-                val baseLat = if (estLat != 0.0) estLat else latestGpsLat
-                val baseLon = if (estLon != 0.0) estLon else latestGpsLon
+                // Base coordinates: Authoritative fused estimator output (estLat, estLon) with GNSS divergence protection
+                val baseLat: Double
+                val baseLon: Double
+                if (!isPureDr && latestGpsLat != 0.0 && latestGpsLon != 0.0) {
+                    val distEstToGpsM = if (estLat != 0.0) {
+                        val dLat = (estLat - latestGpsLat) * 111132.954
+                        val dLon = (estLon - latestGpsLon) * 111412.84 * kotlin.math.cos(Math.toRadians(latestGpsLat))
+                        kotlin.math.sqrt(dLat * dLat + dLon * dLon)
+                    } else 999.0
+
+                    if (distEstToGpsM > 25.0 || estLat == 0.0) {
+                        baseLat = latestGpsLat
+                        baseLon = latestGpsLon
+                    } else {
+                        baseLat = estLat
+                        baseLon = estLon
+                    }
+                } else {
+                    baseLat = if (estLat != 0.0) estLat else latestGpsLat
+                    baseLon = if (estLon != 0.0) estLon else latestGpsLon
+                }
 
                 // Continuous compass yaw offset calibration against GNSS ground track when moving
                 if (isGnssValid && hasGpsBearing && estSpeedMs >= 1.5 && isCompassOffsetCalibrated && !hasHardwareMag) {
@@ -745,8 +788,8 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
                 val routeProgress = routeManager.updateProgress(activeLat, activeLon, estSpeedMs)
 
                 val updatedState = NavigationState(
-                    latitude = if (isPedestrianMode) pdrLat else (if (estLat != 0.0) estLat else latestGpsLat),
-                    longitude = if (isPedestrianMode) pdrLon else (if (estLon != 0.0) estLon else latestGpsLon),
+                    latitude = if (isPedestrianMode) pdrLat else baseLat,
+                    longitude = if (isPedestrianMode) pdrLon else baseLon,
                     speedKmh = estSpeedMs * 3.6,
                     speedMs = estSpeedMs,
                     headingDeg = if (hasCompassReading) lastLiveCompassHeadingDeg.toDouble() else activeHeading,
@@ -1029,17 +1072,19 @@ class DeadReckoningService : Service(), SensorEventListener, LocationListener {
     }
 
     fun startRoute(
+        startLat: Double = 0.0,
+        startLon: Double = 0.0,
         destLat: Double,
         destLon: Double,
         destName: String,
         onSuccess: (com.inav.navigation.routing.RoutePlan) -> Unit,
         onError: (String) -> Unit = {}
     ) {
-        val startLat = latestGpsLat.takeIf { it != 0.0 } ?: _navState.value.latitude
-        val startLon = latestGpsLon.takeIf { it != 0.0 } ?: _navState.value.longitude
+        val effStartLat = if (startLat != 0.0) startLat else (latestGpsLat.takeIf { it != 0.0 } ?: _navState.value.latitude)
+        val effStartLon = if (startLon != 0.0) startLon else (latestGpsLon.takeIf { it != 0.0 } ?: _navState.value.longitude)
         routeManager.requestRoute(
-            startLat = startLat,
-            startLon = startLon,
+            startLat = effStartLat,
+            startLon = effStartLon,
             destLat = destLat,
             destLon = destLon,
             destName = destName,
