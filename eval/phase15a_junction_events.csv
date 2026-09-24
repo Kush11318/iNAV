@@ -1,0 +1,2 @@
+time_s,junction_id,turn_deg,dist_to_node_m,heading_res_deg,nis,accepted,e_along_before,e_along_after,delta_along,e_cross_before,e_cross_after,delta_cross,run,outage_id,duration_s
+60.5,995843854,30.498791806889887,23.548410365077146,35.4332077499285,2.688408732406571,True,61.238932086515504,66.16813808271068,4.929205996195179,-83.95098440356104,-63.4077507846351,-20.54323361892594,vw3,2,120
