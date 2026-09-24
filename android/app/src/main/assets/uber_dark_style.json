@@ -2677,6 +2677,1161 @@
         "text-halo-color": "#0b0d11",
         "text-halo-width": 1.4
       }
+    },
+    {
+      "id": "housenumber",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "housenumber",
+      "minzoom": 16.5,
+      "layout": {
+        "text-field": [
+          "get",
+          "housenumber"
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": 10
+      },
+      "paint": {
+        "text-color": "#e2e8f0",
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.0
+      }
+    },
+    {
+      "id": "poi_transit",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "poi",
+      "minzoom": 12,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "airport",
+            "bus",
+            "rail"
+          ],
+          true,
+          false
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "icon-image": [
+          "to-string",
+          [
+            "get",
+            "class"
+          ]
+        ],
+        "icon-size": 0.8,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.6
+        ],
+        "text-field": [
+          "case",
+          [
+            "has",
+            "name:nonlatin"
+          ],
+          [
+            "concat",
+            [
+              "coalesce",
+              [
+                "get",
+                "name:latin"
+              ],
+              [
+                "get",
+                "name_en"
+              ],
+              [
+                "get",
+                "name"
+              ]
+            ],
+            "\n",
+            [
+              "get",
+              "name:nonlatin"
+            ]
+          ],
+          [
+            "coalesce",
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name:latin"
+            ],
+            [
+              "get",
+              "name"
+            ]
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 9,
+        "text-size": 11
+      },
+      "paint": {
+        "text-color": "#e2e8f0",
+        "text-halo-blur": 0.5,
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "poi_fuel",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "poi",
+      "minzoom": 12.0,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "class"
+          ],
+          [
+            "fuel"
+          ],
+          true,
+          false
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "icon-image": "fuel",
+        "icon-size": 0.85,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.6
+        ],
+        "text-field": [
+          "case",
+          [
+            "has",
+            "name:nonlatin"
+          ],
+          [
+            "concat",
+            [
+              "coalesce",
+              [
+                "get",
+                "name:latin"
+              ],
+              [
+                "get",
+                "name_en"
+              ],
+              [
+                "get",
+                "name"
+              ]
+            ],
+            "\n",
+            [
+              "get",
+              "name:nonlatin"
+            ]
+          ],
+          [
+            "coalesce",
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name:latin"
+            ],
+            [
+              "get",
+              "name"
+            ]
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Bold"
+        ],
+        "text-max-width": 9,
+        "text-size": 11.5
+      },
+      "paint": {
+        "text-color": "#fbbf24",
+        "text-halo-blur": 0.5,
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "poi_r1",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "poi",
+      "minzoom": 13,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "geometry-type"
+          ],
+          [
+            "MultiPoint",
+            "Point"
+          ],
+          true,
+          false
+        ],
+        [
+          ">=",
+          [
+            "get",
+            "rank"
+          ],
+          1
+        ],
+        [
+          "<",
+          [
+            "get",
+            "rank"
+          ],
+          7
+        ],
+        [
+          "!=",
+          [
+            "get",
+            "class"
+          ],
+          "fuel"
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "icon-image": [
+          "match",
+          [
+            "get",
+            "subclass"
+          ],
+          [
+            "fuel"
+          ],
+          "fuel",
+          [
+            "bakery"
+          ],
+          "bakery",
+          [
+            "supermarket",
+            "grocery"
+          ],
+          "grocery",
+          [
+            "clothes",
+            "clothing"
+          ],
+          "clothing_store",
+          [
+            "fast_food"
+          ],
+          "fast_food",
+          [
+            "cafe"
+          ],
+          "cafe",
+          [
+            "restaurant"
+          ],
+          "restaurant",
+          [
+            "bar",
+            "pub"
+          ],
+          "bar",
+          [
+            "pharmacy",
+            "chemist"
+          ],
+          "pharmacy",
+          [
+            "hospital",
+            "clinic"
+          ],
+          "hospital",
+          [
+            "bank",
+            "atm"
+          ],
+          "bank",
+          [
+            "police"
+          ],
+          "police",
+          [
+            "post_office",
+            "post"
+          ],
+          "post",
+          [
+            "school",
+            "college",
+            "university"
+          ],
+          "school",
+          [
+            "hairdresser",
+            "beauty"
+          ],
+          "hairdresser",
+          [
+            "florist"
+          ],
+          "florist",
+          [
+            "furniture"
+          ],
+          "furniture",
+          [
+            "car_repair",
+            "car"
+          ],
+          "car",
+          [
+            "hotel",
+            "lodging"
+          ],
+          "lodging",
+          [
+            "cinema",
+            "theatre"
+          ],
+          "cinema",
+          [
+            "park"
+          ],
+          "park",
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "fuel"
+            ],
+            "fuel",
+            [
+              "restaurant"
+            ],
+            "restaurant",
+            [
+              "fast_food"
+            ],
+            "fast_food",
+            [
+              "cafe"
+            ],
+            "cafe",
+            [
+              "bar"
+            ],
+            "bar",
+            [
+              "bank"
+            ],
+            "bank",
+            [
+              "atm"
+            ],
+            "bank",
+            [
+              "pharmacy"
+            ],
+            "pharmacy",
+            [
+              "hospital"
+            ],
+            "hospital",
+            [
+              "doctor"
+            ],
+            "doctors",
+            [
+              "police"
+            ],
+            "police",
+            [
+              "post"
+            ],
+            "post",
+            [
+              "school"
+            ],
+            "school",
+            [
+              "college",
+              "university"
+            ],
+            "college",
+            [
+              "lodging",
+              "hotel"
+            ],
+            "lodging",
+            [
+              "grocery"
+            ],
+            "grocery",
+            [
+              "cinema"
+            ],
+            "cinema",
+            [
+              "theatre"
+            ],
+            "theatre",
+            [
+              "park"
+            ],
+            "park",
+            [
+              "commercial",
+              "office"
+            ],
+            "commercial",
+            [
+              "place_of_worship"
+            ],
+            "place_of_worship",
+            [
+              "shop"
+            ],
+            "shop",
+            ""
+          ]
+        ],
+        "icon-size": 0.8,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.6
+        ],
+        "text-field": [
+          "case",
+          [
+            "has",
+            "name:nonlatin"
+          ],
+          [
+            "concat",
+            [
+              "coalesce",
+              [
+                "get",
+                "name:latin"
+              ],
+              [
+                "get",
+                "name_en"
+              ],
+              [
+                "get",
+                "name"
+              ]
+            ],
+            "\n",
+            [
+              "get",
+              "name:nonlatin"
+            ]
+          ],
+          [
+            "coalesce",
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name:latin"
+            ],
+            [
+              "get",
+              "name"
+            ]
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 9,
+        "text-size": 11
+      },
+      "paint": {
+        "text-color": "#e2e8f0",
+        "text-halo-blur": 0.5,
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "poi_r7",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "poi",
+      "minzoom": 13.8,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "geometry-type"
+          ],
+          [
+            "MultiPoint",
+            "Point"
+          ],
+          true,
+          false
+        ],
+        [
+          ">=",
+          [
+            "get",
+            "rank"
+          ],
+          7
+        ],
+        [
+          "<",
+          [
+            "get",
+            "rank"
+          ],
+          20
+        ],
+        [
+          "!=",
+          [
+            "get",
+            "class"
+          ],
+          "fuel"
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "icon-image": [
+          "match",
+          [
+            "get",
+            "subclass"
+          ],
+          [
+            "fuel"
+          ],
+          "fuel",
+          [
+            "bakery"
+          ],
+          "bakery",
+          [
+            "supermarket",
+            "grocery"
+          ],
+          "grocery",
+          [
+            "clothes",
+            "clothing"
+          ],
+          "clothing_store",
+          [
+            "fast_food"
+          ],
+          "fast_food",
+          [
+            "cafe"
+          ],
+          "cafe",
+          [
+            "restaurant"
+          ],
+          "restaurant",
+          [
+            "bar",
+            "pub"
+          ],
+          "bar",
+          [
+            "pharmacy",
+            "chemist"
+          ],
+          "pharmacy",
+          [
+            "hospital",
+            "clinic"
+          ],
+          "hospital",
+          [
+            "bank",
+            "atm"
+          ],
+          "bank",
+          [
+            "police"
+          ],
+          "police",
+          [
+            "post_office",
+            "post"
+          ],
+          "post",
+          [
+            "school",
+            "college",
+            "university"
+          ],
+          "school",
+          [
+            "hairdresser",
+            "beauty"
+          ],
+          "hairdresser",
+          [
+            "florist"
+          ],
+          "florist",
+          [
+            "furniture"
+          ],
+          "furniture",
+          [
+            "car_repair",
+            "car"
+          ],
+          "car",
+          [
+            "hotel",
+            "lodging"
+          ],
+          "lodging",
+          [
+            "cinema",
+            "theatre"
+          ],
+          "cinema",
+          [
+            "park"
+          ],
+          "park",
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "fuel"
+            ],
+            "fuel",
+            [
+              "restaurant"
+            ],
+            "restaurant",
+            [
+              "fast_food"
+            ],
+            "fast_food",
+            [
+              "cafe"
+            ],
+            "cafe",
+            [
+              "bar"
+            ],
+            "bar",
+            [
+              "bank"
+            ],
+            "bank",
+            [
+              "atm"
+            ],
+            "bank",
+            [
+              "pharmacy"
+            ],
+            "pharmacy",
+            [
+              "hospital"
+            ],
+            "hospital",
+            [
+              "doctor"
+            ],
+            "doctors",
+            [
+              "police"
+            ],
+            "police",
+            [
+              "post"
+            ],
+            "post",
+            [
+              "school"
+            ],
+            "school",
+            [
+              "college",
+              "university"
+            ],
+            "college",
+            [
+              "lodging",
+              "hotel"
+            ],
+            "lodging",
+            [
+              "grocery"
+            ],
+            "grocery",
+            [
+              "cinema"
+            ],
+            "cinema",
+            [
+              "theatre"
+            ],
+            "theatre",
+            [
+              "park"
+            ],
+            "park",
+            [
+              "commercial",
+              "office"
+            ],
+            "commercial",
+            [
+              "place_of_worship"
+            ],
+            "place_of_worship",
+            [
+              "shop"
+            ],
+            "shop",
+            ""
+          ]
+        ],
+        "icon-size": 0.75,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.6
+        ],
+        "text-field": [
+          "case",
+          [
+            "has",
+            "name:nonlatin"
+          ],
+          [
+            "concat",
+            [
+              "coalesce",
+              [
+                "get",
+                "name:latin"
+              ],
+              [
+                "get",
+                "name_en"
+              ],
+              [
+                "get",
+                "name"
+              ]
+            ],
+            "\n",
+            [
+              "get",
+              "name:nonlatin"
+            ]
+          ],
+          [
+            "coalesce",
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name:latin"
+            ],
+            [
+              "get",
+              "name"
+            ]
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 9,
+        "text-size": 10.5
+      },
+      "paint": {
+        "text-color": "#e2e8f0",
+        "text-halo-blur": 0.5,
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "poi_r20",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "poi",
+      "minzoom": 14.2,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "geometry-type"
+          ],
+          [
+            "MultiPoint",
+            "Point"
+          ],
+          true,
+          false
+        ],
+        [
+          ">=",
+          [
+            "get",
+            "rank"
+          ],
+          20
+        ],
+        [
+          "!=",
+          [
+            "get",
+            "class"
+          ],
+          "fuel"
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "icon-image": [
+          "match",
+          [
+            "get",
+            "subclass"
+          ],
+          [
+            "fuel"
+          ],
+          "fuel",
+          [
+            "bakery"
+          ],
+          "bakery",
+          [
+            "supermarket",
+            "grocery"
+          ],
+          "grocery",
+          [
+            "clothes",
+            "clothing"
+          ],
+          "clothing_store",
+          [
+            "fast_food"
+          ],
+          "fast_food",
+          [
+            "cafe"
+          ],
+          "cafe",
+          [
+            "restaurant"
+          ],
+          "restaurant",
+          [
+            "bar",
+            "pub"
+          ],
+          "bar",
+          [
+            "pharmacy",
+            "chemist"
+          ],
+          "pharmacy",
+          [
+            "hospital",
+            "clinic"
+          ],
+          "hospital",
+          [
+            "bank",
+            "atm"
+          ],
+          "bank",
+          [
+            "police"
+          ],
+          "police",
+          [
+            "post_office",
+            "post"
+          ],
+          "post",
+          [
+            "school",
+            "college",
+            "university"
+          ],
+          "school",
+          [
+            "hairdresser",
+            "beauty"
+          ],
+          "hairdresser",
+          [
+            "florist"
+          ],
+          "florist",
+          [
+            "furniture"
+          ],
+          "furniture",
+          [
+            "car_repair",
+            "car"
+          ],
+          "car",
+          [
+            "hotel",
+            "lodging"
+          ],
+          "lodging",
+          [
+            "cinema",
+            "theatre"
+          ],
+          "cinema",
+          [
+            "park"
+          ],
+          "park",
+          [
+            "match",
+            [
+              "get",
+              "class"
+            ],
+            [
+              "fuel"
+            ],
+            "fuel",
+            [
+              "restaurant"
+            ],
+            "restaurant",
+            [
+              "fast_food"
+            ],
+            "fast_food",
+            [
+              "cafe"
+            ],
+            "cafe",
+            [
+              "bar"
+            ],
+            "bar",
+            [
+              "bank"
+            ],
+            "bank",
+            [
+              "atm"
+            ],
+            "bank",
+            [
+              "pharmacy"
+            ],
+            "pharmacy",
+            [
+              "hospital"
+            ],
+            "hospital",
+            [
+              "doctor"
+            ],
+            "doctors",
+            [
+              "police"
+            ],
+            "police",
+            [
+              "post"
+            ],
+            "post",
+            [
+              "school"
+            ],
+            "school",
+            [
+              "college",
+              "university"
+            ],
+            "college",
+            [
+              "lodging",
+              "hotel"
+            ],
+            "lodging",
+            [
+              "grocery"
+            ],
+            "grocery",
+            [
+              "cinema"
+            ],
+            "cinema",
+            [
+              "theatre"
+            ],
+            "theatre",
+            [
+              "park"
+            ],
+            "park",
+            [
+              "commercial",
+              "office"
+            ],
+            "commercial",
+            [
+              "place_of_worship"
+            ],
+            "place_of_worship",
+            [
+              "shop"
+            ],
+            "shop",
+            ""
+          ]
+        ],
+        "icon-size": 0.75,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.6
+        ],
+        "text-field": [
+          "case",
+          [
+            "has",
+            "name:nonlatin"
+          ],
+          [
+            "concat",
+            [
+              "coalesce",
+              [
+                "get",
+                "name:latin"
+              ],
+              [
+                "get",
+                "name_en"
+              ],
+              [
+                "get",
+                "name"
+              ]
+            ],
+            "\n",
+            [
+              "get",
+              "name:nonlatin"
+            ]
+          ],
+          [
+            "coalesce",
+            [
+              "get",
+              "name_en"
+            ],
+            [
+              "get",
+              "name:latin"
+            ],
+            [
+              "get",
+              "name"
+            ]
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-max-width": 9,
+        "text-size": 10
+      },
+      "paint": {
+        "text-color": "#e2e8f0",
+        "text-halo-blur": 0.5,
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1.5
+      }
     }
   ],
   "name": "Voyager Precision Monochrome"
