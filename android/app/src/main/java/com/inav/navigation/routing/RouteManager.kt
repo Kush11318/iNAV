@@ -68,6 +68,7 @@ class RouteManager {
     private var currentStepIdx = 0
 
     val presetPlaces = listOf(
+        PlaceSuggestion("Police Welfare Filling Station", "PRFM+3Q2, Airport Rd, near Bank of India, Ramchandra Nagar Ext, Chowraha, Indore", 22.7227, 75.8343, "⛽"),
         PlaceSuggestion("Metro Underground Tunnel", "Super Corridor / MR-10, Indore", 22.7485, 75.8520, "🚇"),
         PlaceSuggestion("Indore Junction Railway Station", "Chhoti Gwaltoli, Indore", 22.7196, 75.8577, "🚉"),
         PlaceSuggestion("Rajwada Historic Palace", "Rajwada, M.G. Road, Indore", 22.7177, 75.8544, "🏛️"),
