@@ -671,6 +671,22 @@ public:
 
         double candidate_nis = compute_pos_nis(p_N, p_E, sample.horizontal_accuracy_m);
         if (candidate_nis > health_mgr.config().nis_pos_2d_threshold) {
+            // Divergence recovery: If the filter state diverged or was held stationary while the vehicle moved,
+            // and live GNSS has high confidence (accuracy <= 25m), re-anchor UKF state to true physical position
+            if (sample.horizontal_accuracy_m <= 25.0) {
+                x_[0] = p_N;
+                x_[1] = p_E;
+                if (sample.validity & GnssValidity::SPEED_VALID) {
+                    x_[2] = sample.speed_mps;
+                }
+                if (sample.validity & GnssValidity::BEARING_VALID) {
+                    x_[3] = sample.bearing_deg * (UKF_PI / 180.0);
+                }
+                P_[0][0] = sample.horizontal_accuracy_m * sample.horizontal_accuracy_m;
+                P_[1][1] = sample.horizontal_accuracy_m * sample.horizontal_accuracy_m;
+                if (pos_accepted) *pos_accepted = true;
+                return true;
+            }
             health_mgr.on_measurement_rejected();
             return false;
         }
