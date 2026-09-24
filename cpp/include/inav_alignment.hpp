@@ -351,6 +351,7 @@ private:
         apply_static_solution(a_mean, g_mean);
     }
 
+public:
     void apply_static_solution(const Vec3& a_mean, const Vec3& g_mean) {
         double norm_a = std::sqrt(a_mean.x*a_mean.x + a_mean.y*a_mean.y + a_mean.z*a_mean.z);
         if (norm_a < 1e-3) return;
