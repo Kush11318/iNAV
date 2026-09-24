@@ -29,8 +29,7 @@
 9. [Head-to-Head Architectural Comparison (iNAV vs. Alternative Approaches)](#-head-to-head-architectural-comparison-inav-vs-alternative-approaches)
 10. [Repository Structure & Codebase Map](#-repository-structure--codebase-map)
 11. [Quickstart & Reproducibility Guide](#-quickstart--reproducibility-guide)
-12. [ISRO SIH 2026 Jury Defense Cheatsheet](#-isro-sih-2026-jury-defense-cheatsheet)
-13. [References & Academic Foundation](#-references--academic-foundation)
+12. [References & Academic Foundation](#-references--academic-foundation)
 
 ---
 
@@ -545,27 +544,7 @@ adb shell am start -n com.inav.navigation/.ui.MainActivity
 ```
 *Or directly install the pre-compiled production release APK located at [`iNAV-final-release.apk`](iNAV-final-release.apk).*
 
----
 
-## 🏛️ ISRO SIH 2026 Jury Defense Cheatsheet
-
-### Q1: "Why did you choose a 7-State Unscented Kalman Filter (UKF) over an EKF?"
-> *"Vehicle heading enters dead-reckoning equations through trigonometric sines and cosines ($\cos\psi$ and $\sin\psi$), which are strongly non-linear. An EKF relies on first-order Taylor series linearisation with Jacobians. During extended tunnel blackouts, heading uncertainty expands, and first-order linearisation breaks down catastrophically. Our UKF propagates deterministic sigma points through the exact non-linear kinematics, preserving covariance consistency with negligible compute ($0.4\text{ ms}$ per epoch)."*
-
-### Q2: "Is this really an AI project, or just a Kalman filter with a neural network bolted on?"
-> *"AI is applied specifically where classical physics fails. Accelerometer double-integration explodes cubically ($\sim t^3$). Our **VelocityNet** replaces double-integration entirely by reading chassis vibration spectra through a temporal 1D-CNN + GRU to infer forward displacement ($\Delta d$). Furthermore, its learned uncertainty head ($\sigma$) dynamically scales the Kalman gain $R$ matrix based on road roughness, and its event classifier asserts standstill ZUPT at red lights."*
-
-### Q3: "How does the system transition between GNSS and Dead-Reckoning without cursor jumping?"
-> *"Because our system uses an integrated filter architecture, **the transition is mathematically continuous.** There is no disruptive mode switch. When GNSS is healthy, satellite position and velocity updates refine sensor biases. When a tunnel is entered, the filter simply omits the GNSS measurement update and continues propagating on IMU kinematics, CAN wheel odometry, and map constraints. On tunnel exit, our **2-second Quarantine Ramp** rejects portal multipath and smoothly eases GPS back in."*
-
-### Q4: "How do you prevent the map matcher from snapping onto the wrong road at highway forks?"
-> *"We implemented our **Passive Dual-Gate Protection Layer**. First, the **Viterbi Margin Gate** verifies that the winning road hypothesis is at least $3.0\times$ more probable than the runner-up. Second, the **$30^\circ$ Heading Gate** rejects candidates whose road azimuth diverges from the vehicle's kinematic heading. If either gate fails, the filter **abstains** from snapping, relying entirely on smooth inertial-odometry dead reckoning."*
-
-### Q5: "What happens if the driver knocks the phone out of its cradle mid-drive?"
-> *"Pillar 1 continuously monitors the Earth gravity unit vector. A sudden gravity angular displacement ($> 5^\circ$) triggers an immediate cradle disturbance alarm. The system resets alignment confidence and executes dynamic PCA projection on the very next acceleration event to re-identify the vehicle forward axis, preventing false lateral acceleration integration."*
-
-### Q6: "Can this run on autonomous vehicles, drones, or low-cost microcontrollers?"
-> *"Yes. We built two synchronized deliverables: the high-level Android mobile navigation app, and our zero-dependency C++20 core engine (`inav_edge_cli`). Compiled on ARM64 Linux, our C++ core processes **$100\text{ Hz}$ IMU epochs in $0.414\text{ microseconds}$**—over **$8,800\times$ faster than real-time**. It can be deployed immediately on autonomous vehicle ECUs, robotic rovers, or defense telemetry units."*
 
 ---
 
