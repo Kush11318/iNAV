@@ -661,12 +661,22 @@
             app:elevation="6dp"
             app:borderWidth="0dp" />
 
-        <!-- Legacy / Fallback FAB references for complete binding compatibility -->
+        <!-- 4. Layers / Satellite & White Mode Toggle FAB -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_layers"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:contentDescription="Map Layers"
+            android:src="@drawable/ic_layers_black"
+            app:fabCustomSize="46dp"
+            app:maxImageSize="22dp"
+            app:backgroundTint="#FFFFFFFF"
+            app:tint="#FF000000"
+            app:elevation="6dp"
+            app:borderWidth="0dp" />
+
+        <!-- Legacy / Fallback FAB references for complete binding compatibility -->
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_track_up"
             android:layout_width="0dp"
@@ -719,6 +729,27 @@
             android:layout_height="0.75dp"
             android:background="#14000000" />
 
+        <!-- Recalibrate Sensors / IMU Alignment Button -->
+        <FrameLayout
+            android:id="@+id/btn_home_recalibrate"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Recalibrate Sensors">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_sensor_activity" />
+        </FrameLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="28dp"
+            android:layout_height="0.75dp"
+            android:background="#14000000" />
+
         <!-- Recenter / My Location Arrow -->
         <FrameLayout
             android:id="@+id/btn_home_location"
@@ -746,6 +777,13 @@
         android:elevation="14dp"
         app:layout_constraintBottom_toTopOf="@id/card_trip_cockpit"
         app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Modern Circular Speedometer Dial (Pure White & Jet Black Aesthetic) -->
+        <com.inav.navigation.ui.CircularSpeedometerView
+            android:id="@+id/view_circular_speedometer"
+            android:layout_width="62dp"
+            android:layout_height="62dp"
+            android:layout_marginBottom="10dp" />
 
         <!-- Speed Limit Sign Badge (35 LIMIT) -->
         <FrameLayout
@@ -793,10 +831,11 @@
             android:focusable="true">
 
             <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_gravity="center"
-                android:src="@drawable/ic_shield_blue" />
+                android:src="@drawable/ic_shield_blue"
+                app:tint="#FF000000" />
         </FrameLayout>
 
         <!-- Hidden / Fallback references so existing view bindings work -->
@@ -1319,14 +1358,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Devi Ahilya Bai Holkar Airport"
+                        android:text="Police Welfare Filling Station"
                         android:textColor="#FF000000"
                         android:textSize="13sp"
                         android:fontFamily="sans-serif-bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Depalpur Road, Indore"
+                        android:text="PRFM+3Q2, Airport Rd, Ramchandra Nagar Chowraha"
                         android:textColor="#FF8E8E93"
                         android:textSize="11sp"
                         android:singleLine="true" />
@@ -1427,6 +1466,7 @@
 
         <!-- Grab Handle Bar -->
         <View
+            android:id="@+id/pill_trip_cockpit_handle"
             android:layout_width="40dp"
             android:layout_height="4dp"
             android:layout_gravity="center_horizontal"
@@ -1459,6 +1499,7 @@
 
             <!-- Center: Bold Duration, Red Passenger Badge, Distance, & Destination -->
             <LinearLayout
+                android:id="@+id/container_trip_eta_center"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -1606,7 +1647,7 @@
             android:orientation="horizontal"
             android:clickable="true"
             android:focusable="true"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <ImageView
                 android:layout_width="14dp"
@@ -1652,6 +1693,7 @@
                 android:background="#FFE5E5E5" />
 
             <LinearLayout
+                android:id="@+id/header_sensors_cockpit_top"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -1703,85 +1745,987 @@
                     android:insetBottom="0dp" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_coordinates"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="22.7196° N, 75.8577° E"
-                android:textColor="#FF737373"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/tv_sensor_accel"
+            <!-- Beautiful Telemetry Cockpit (Judges Presentation Grid) -->
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ACCEL: 0.00, 0.00, 9.81 m/s²"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                android:maxHeight="330dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
 
-            <TextView
-                android:id="@+id/tv_sensor_gyro"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="GYRO: 0.00, 0.00, 0.00 rad/s"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="6dp">
 
-            <TextView
-                android:id="@+id/tv_sensor_mag"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="MAG: 0.0, 0.0, 0.0 µT"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                    <!-- SECTION 1: 3-AXIS ACCELEROMETER & FORWARD THRUST -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚡ 3-AXIS ACCELEROMETER &amp; LIN FORWARD"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/tv_sensor_baro"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="BARO: 1013.25 hPa · Alt: 520m"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="7dp">
 
-            <TextView
-                android:id="@+id/tv_sensor_gnss"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="GNSS: FIX 3D (18 sats, DOP 0.9)"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                        <!-- X ACCEL -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="X-ACCEL"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_accel_x"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.00"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m/s²"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_sensor_obd"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="OBD: Disconnected (PID 010D)"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                        <!-- Y ACCEL -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Y-ACCEL"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_accel_y"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.00"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m/s²"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_sensor_pdr"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="PDR: Inactive (Vehicular Mode)"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                        <!-- Z ACCEL -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Z-ACCEL"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_accel_z"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+9.81"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m/s²"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_sensor_env"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="ENV: LUX 120 · Normal Ambient"
-                android:textColor="#FF404040"
-                android:textSize="9.5sp"
-                android:fontFamily="monospace" />
+                        <!-- LIN FWD ACCEL (ACCENT HIGHLIGHT) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile_accent">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LIN FWD"
+                                android:textColor="#FF16A34A"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-black" />
+                            <TextView
+                                android:id="@+id/tv_val_accel_fwd"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.00"
+                                android:textColor="#FF15803D"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m/s²"
+                                android:textColor="#FF16A34A"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION 2: 3-AXIS GYROSCOPE & DRIFT BIAS -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔄 GYROSCOPE RATES &amp; DRIFT BIAS b_ω"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="7dp">
+
+                        <!-- ωX -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ωX ROLL"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_gyro_x"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="°/s"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- ωY -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ωY PITCH"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_gyro_y"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="°/s"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- ωZ (YAW) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ωZ YAW"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_gyro_z"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="°/s"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- DRIFT BIAS (BLUE ACCENT) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile_blue">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DRIFT b_ω"
+                                android:textColor="#FF0284C7"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-black" />
+                            <TextView
+                                android:id="@+id/tv_val_gyro_bias"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.000"
+                                android:textColor="#FF0369A1"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="°/s ZARU"
+                                android:textColor="#FF0284C7"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION 3: BAROMETRIC ALTIMETER, CLIMB & GRADE -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⛰️ BAROMETRIC ALTIMETER, CLIMB &amp; GRADE"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="7dp">
+
+                        <!-- PRESSURE -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="PRESSURE"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_baro_press"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="1013.2"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="hPa"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- ALTITUDE -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ALTITUDE"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_baro_alt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="540"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m MSL"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- CLIMB (ACCENT HIGHLIGHT) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile_accent">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="CLIMB"
+                                android:textColor="#FF16A34A"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-black" />
+                            <TextView
+                                android:id="@+id/tv_val_baro_climb"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.0"
+                                android:textColor="#FF15803D"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="m/s"
+                                android:textColor="#FF16A34A"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- GRADE -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="GRADE"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_baro_grade"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="+0.0%"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Incline"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION 4: MAGNETOMETER (µT) & YAW -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🧭 MAGNETOMETER &amp; FUSED COMPASS YAW"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="7dp">
+
+                        <!-- Bx -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MAG Bx"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_mag_x"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="µT"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- By -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MAG By"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_mag_y"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="µT"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- Bz -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MAG Bz"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_mag_z"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.0"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="µT"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- MAG/EKF YAW -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="MAG/EKF"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_mag_yaw"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="358°"
+                                android:textColor="#FF0F172A"
+                                android:textSize="15sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Heading"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION 5: GEODETIC POSITION & ATTITUDE ANGLES -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌐 GEODETIC POSITION &amp; ATTITUDE ANGLES"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="7dp">
+
+                        <!-- LATITUDE -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.25"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile_blue">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LATITUDE"
+                                android:textColor="#FF0284C7"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-black" />
+                            <TextView
+                                android:id="@+id/tv_val_gnss_lat"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="22.719600°"
+                                android:textColor="#FF0369A1"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="WGS-84 North"
+                                android:textColor="#FF0284C7"
+                                android:textSize="7.5sp" />
+                        </LinearLayout>
+
+                        <!-- LONGITUDE -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.25"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile_blue">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="LONGITUDE"
+                                android:textColor="#FF0284C7"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-black" />
+                            <TextView
+                                android:id="@+id/tv_val_gnss_lon"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="75.857700°"
+                                android:textColor="#FF0369A1"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="WGS-84 East"
+                                android:textColor="#FF0284C7"
+                                android:textSize="7.5sp" />
+                        </LinearLayout>
+
+                        <!-- PITCH -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.75"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="PITCH"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_pitch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.0°"
+                                android:textColor="#FF0F172A"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Degrees"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="7.5sp" />
+                        </LinearLayout>
+
+                        <!-- ROLL -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.75"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="ROLL"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_roll"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0.0°"
+                                android:textColor="#FF0F172A"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Degrees"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="7.5sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- SECTION 6: GNSS CONSTELLATION & VEHICLE BUS -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🛰️ GNSS CONSTELLATION &amp; VEHICLE BUS"
+                        android:textColor="#FF475569"
+                        android:textSize="9sp"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.06"
+                        android:layout_marginBottom="4dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="4dp">
+
+                        <!-- SATELLITES -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="SATELLITES"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_gnss_sats"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="18 Sats"
+                                android:textColor="#FF0F172A"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:id="@+id/tv_val_gnss_acc"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="±1.0m σ"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- NAV FIX -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="FIX STATE"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_gnss_fix"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="INS:LOCK"
+                                android:textColor="#FF10B981"
+                                android:textSize="13sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3D Hybrid"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- VEHICLE BUS -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="VEHICLE BUS"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_bus_obd"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="STANDALONE"
+                                android:textColor="#FF0F172A"
+                                android:textSize="12sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="IMU Mode"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+
+                        <!-- AMBIENT LIGHT -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2.5dp"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:paddingVertical="5dp"
+                            android:paddingHorizontal="2dp"
+                            android:background="@drawable/bg_sensor_tile">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="AMBIENT"
+                                android:textColor="#FF64748B"
+                                android:textSize="8sp"
+                                android:fontFamily="sans-serif-bold" />
+                            <TextView
+                                android:id="@+id/tv_val_bus_light"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="74 lx"
+                                android:textColor="#FF0F172A"
+                                android:textSize="14sp"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Daylight"
+                                android:textColor="#FF94A3B8"
+                                android:textSize="8sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Legacy hidden bindings to ensure 100% build compatibility -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone">
+                        <TextView android:id="@+id/tv_coordinates" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_accel" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_gyro" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_mag" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_baro" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_gnss" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_obd" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_pdr" android:layout_width="0dp" android:layout_height="0dp" />
+                        <TextView android:id="@+id/tv_sensor_env" android:layout_width="0dp" android:layout_height="0dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
         </LinearLayout>
 
         <!-- Hidden Compatibility views -->
@@ -1880,5 +2824,348 @@
                 android:fontFamily="sans-serif-medium" />
         </LinearLayout>
     </FrameLayout>
+
+    <!-- ================================================================= -->
+    <!-- 15. FULL-SCREEN STARTUP CALIBRATION OVERLAY (PHASE 12B)           -->
+    <!-- ================================================================= -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/container_calibration_screen"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#0A0D14"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="60dp"
+        android:visibility="visible">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingTop="36dp"
+                android:paddingBottom="28dp"
+                android:paddingHorizontal="24dp">
+
+                <!-- Title & Subtitle -->
+                <TextView
+                    android:id="@+id/tv_calib_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Preparing Navigation"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="-0.02" />
+
+                <TextView
+                    android:id="@+id/tv_calib_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="Keep your phone securely mounted.\nKeep the vehicle stationary while we calibrate the sensors."
+                    android:textColor="#94A3B8"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="3dp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <!-- Safety UX Badge -->
+                <LinearLayout
+                    android:id="@+id/pill_calib_safety"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_calibration_card"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️ Complete calibration while safely parked."
+                        android:textColor="#F59E0B"
+                        android:textSize="12sp"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <!-- Center Apple-Inspired Dial Timer -->
+                <com.inav.navigation.ui.AppleClockTimerView
+                    android:id="@+id/view_apple_clock_timer"
+                    android:layout_width="210dp"
+                    android:layout_height="210dp"
+                    android:layout_marginTop="20dp" />
+
+                <!-- Live Status Detail Text -->
+                <TextView
+                    android:id="@+id/tv_calib_status_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Calibrating sensors... 0–15 seconds"
+                    android:textColor="#E2E8F0"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-medium" />
+
+                <!-- Checklist Card -->
+                <LinearLayout
+                    android:id="@+id/card_calib_checklist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_calibration_card"
+                    android:padding="16dp">
+
+                    <!-- Checklist Item 1 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_check_sensors"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_circle_outline" />
+
+                        <TextView
+                            android:id="@+id/tv_check_sensors"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="Sensors connected"
+                            android:textColor="#94A3B8"
+                            android:textSize="14sp"
+                            android:fontFamily="sans-serif-medium" />
+                    </LinearLayout>
+
+                    <!-- Checklist Item 2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_check_gravity"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_circle_outline" />
+
+                        <TextView
+                            android:id="@+id/tv_check_gravity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="Detecting gravity"
+                            android:textColor="#94A3B8"
+                            android:textSize="14sp"
+                            android:fontFamily="sans-serif-medium" />
+                    </LinearLayout>
+
+                    <!-- Checklist Item 3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_check_gyro"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_circle_outline" />
+
+                        <TextView
+                            android:id="@+id/tv_check_gyro"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="Estimating gyro bias"
+                            android:textColor="#94A3B8"
+                            android:textSize="14sp"
+                            android:fontFamily="sans-serif-medium" />
+                    </LinearLayout>
+
+                    <!-- Checklist Item 4 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <ImageView
+                            android:id="@+id/iv_check_alignment"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_circle_outline" />
+
+                        <TextView
+                            android:id="@+id/tv_check_alignment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="Finalizing alignment"
+                            android:textColor="#94A3B8"
+                            android:textSize="14sp"
+                            android:fontFamily="sans-serif-medium" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Navigation Ready CTA Button -->
+                <Button
+                    android:id="@+id/btn_start_navigation"
+                    android:layout_width="match_parent"
+                    android:layout_height="54dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_calibration_btn"
+                    android:text="START NAVIGATION"
+                    android:textColor="#000000"
+                    android:textSize="15sp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.05"
+                    android:visibility="gone" />
+
+                <!-- Developer / Debug Panel Toggle -->
+                <TextView
+                    android:id="@+id/btn_toggle_calib_debug"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:paddingVertical="8dp"
+                    android:paddingHorizontal="12dp"
+                    android:text="🛠 DEVELOPER DIAGNOSTICS [▲]"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace" />
+
+                <!-- Collapsible Developer Diagnostics Panel -->
+                <LinearLayout
+                    android:id="@+id/container_calib_debug_panel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_calibration_card"
+                    android:padding="14dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tv_debug_samples"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Duration: 0.0s | Samples: 0"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_gyro_bias"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Gyro Bias: [0.0000, 0.0000, 0.0000] rad/s"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_gyro_std"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Gyro StdDev: 0.0000 rad/s"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_accel_mean"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Mean Accel: [0.00, 0.00, 0.00] m/s²"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_gravity_mag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="|g|: 0.00 m/s² (Target: 9.80665)"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_accel_var"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Accel Variance: 0.0000 (m/s²)²"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_stat_conf"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Stationary Confidence: 0.0%"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_attitude"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Attitude: Pitch = 0.0°, Roll = 0.0°"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_yaw_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Yaw: Stationary leveled baseline (Refines dynamically)"
+                        android:textColor="#94A3B8"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+
+                    <TextView
+                        android:id="@+id/tv_debug_align_conf"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Alignment Confidence: 0.0%"
+                        android:textColor="#00E676"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
