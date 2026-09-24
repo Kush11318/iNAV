@@ -1,0 +1,15 @@
+scenario,duration_s,fpe_b_m,fpe_c_m,fpe_diff_m,category,category_name,first_div_t_s,first_div_pct,helped_initially,final_hdg_err_deg,hdg_err_at_div_deg,map_accepted,map_nis_rej,map_off_road,map_wrong_road,diagnostic_summary
+vw14b_o5,180,719.23,2063.29,1344.06,E,Heading/gyro-bias dominated,34.8,19.3,True,91.0,43.6,77,68,164,25,"Severe unconstrained gyro drift (91.0°), causing trajectory rotation and map NIS rejection"
+vw4_o1,120,2325.31,2770.88,445.57,E,Heading/gyro-bias dominated,19.3,16.1,True,97.1,26.7,21,19,180,0,Heading drift (97.1°) coupled with map constraint
+vw14c_o4,180,1176.51,1375.68,199.17,B,Wrong/ambiguous road association,9.5,5.3,True,39.0,11.5,35,165,95,14,Wrong road association (14/35 updates matched wrong parallel edge/junction)
+vw11_o3,60,369.35,537.11,167.76,E,Heading/gyro-bias dominated,7.6,12.7,True,17.6,45.6,25,57,22,17,"Severe unconstrained gyro drift (17.6°), causing trajectory rotation and map NIS rejection"
+vw16a_o4,120,1196.61,1313.27,116.66,B,Wrong/ambiguous road association,32.1,26.8,False,62.5,14.5,161,54,0,133,Wrong road association (133/161 updates matched wrong parallel edge/junction)
+vw3_o3,30,131.97,160.02,28.05,B,Wrong/ambiguous road association,24.1,80.3,False,55.0,24.7,60,0,0,57,Wrong road association (57/60 updates matched wrong parallel edge/junction)
+vw8_o1,60,72.68,91.5,18.82,E,Heading/gyro-bias dominated,4.6,7.7,False,131.4,69.1,112,7,0,110,"Severe unconstrained gyro drift (131.4°), causing trajectory rotation and map NIS rejection"
+vw7_o1,30,191.13,209.28,18.16,E,Heading/gyro-bias dominated,28.2,94.0,False,101.8,109.5,31,9,0,4,"Severe unconstrained gyro drift (101.8°), causing trajectory rotation and map NIS rejection"
+vw4_o3,10,35.21,49.31,14.1,D,Road geometry representation problem,5.3,53.0,True,15.9,20.5,11,7,0,0,Road geometry/bend mismatch; mild lateral pull (+14.1m FPE)
+vw6_o2,30,455.75,468.8,13.06,E,Heading/gyro-bias dominated,3.1,10.3,False,163.6,69.3,27,30,0,27,"Severe unconstrained gyro drift (163.6°), causing trajectory rotation and map NIS rejection"
+vw8_o3,30,195.45,208.46,13.01,E,Heading/gyro-bias dominated,9.6,32.0,False,52.3,56.5,60,0,0,43,"Severe unconstrained gyro drift (52.3°), causing trajectory rotation and map NIS rejection"
+sample_test_trajectory_motorway_o2,30,131.07,133.95,2.88,B,Wrong/ambiguous road association,30.0,100.0,False,162.8,0.0,60,0,0,14,Wrong road association (14/60 updates matched wrong parallel edge/junction)
+vw2_o2,10,6.76,7.23,0.47,D,Road geometry representation problem,10.0,100.0,False,3.2,0.0,20,0,0,2,Road geometry/bend mismatch; mild lateral pull (+0.5m FPE)
+vw5_o2,10,12.32,12.42,0.1,B,Wrong/ambiguous road association,10.0,100.0,False,87.5,0.0,20,0,0,4,Wrong road association (4/20 updates matched wrong parallel edge/junction)
