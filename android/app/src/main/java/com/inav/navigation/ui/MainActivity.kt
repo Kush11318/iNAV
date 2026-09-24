@@ -59,10 +59,12 @@ import org.maplibre.android.style.layers.RasterLayer
 import org.maplibre.android.style.sources.RasterSource
 import org.maplibre.android.style.sources.TileSet
 import org.maplibre.android.utils.ColorUtils
+import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
+        private const val TAG = "MainActivity"
         // OpenFreeMap styles — zero API key, zero billing
         const val STYLE_LIBERTY = "https://tiles.openfreemap.org/styles/liberty"
         const val STYLE_DARK = "asset://uber_dark_style.json"
@@ -113,9 +115,10 @@ class MainActivity : AppCompatActivity() {
     private val ghostPoints = mutableListOf<LatLng>()
     private val routePoints = mutableListOf<LatLng>()
 
-    // Screen state enum (Apple Maps Home vs Active Turn-by-Turn Navigation)
-    enum class AppScreenState { HOME, NAVIGATION }
-    private var currentScreenState = AppScreenState.HOME
+    // Screen state enum (Calibration vs Apple Maps Home vs Active Turn-by-Turn Navigation)
+    enum class AppScreenState { CALIBRATION, HOME, NAVIGATION }
+    private var currentScreenState = AppScreenState.CALIBRATION
+    private var isActivityFreshStart = true
 
     // UI state flags
     private var isDemoMode = false
@@ -133,6 +136,10 @@ class MainActivity : AppCompatActivity() {
     private var lastCenteredLat = 0.0
     private var lastCenteredLon = 0.0
     private var isUserTouchingMap = false
+    private var isUserGesturing = false
+    private var lastSymbolLatLng: LatLng? = null
+    private var lastSymbolHeading: Float = -999.0f
+    private var lastAppliedTrailColor: String = ""
     private var currentPhysicalLocation: Location? = null
 
     // Map view mode
@@ -406,6 +413,26 @@ class MainActivity : AppCompatActivity() {
             val localBinder = binder as DeadReckoningService.LocalBinder
             service = localBinder.getService()
             isBound = true
+
+            val calibMgr = service?.calibrationManager
+            if (isActivityFreshStart) {
+                // Every time the app is restarted fresh, run a calibration test
+                isActivityFreshStart = false
+                hasAutoTransitionedFromCalibration = false
+                binding.btnStartNavigation.visibility = View.GONE
+                calibMgr?.forceRecalibration("App restarted / fresh launch")
+                setScreenState(AppScreenState.CALIBRATION)
+            } else {
+                // Activity stayed alive in background (e.g. switching songs on Spotify)
+                if (calibMgr != null && calibMgr.isComplete()) {
+                    if (currentScreenState == AppScreenState.CALIBRATION) {
+                        setScreenState(AppScreenState.HOME)
+                    }
+                } else {
+                    setScreenState(AppScreenState.CALIBRATION)
+                }
+            }
+
             observeServiceState()
         }
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -417,8 +444,9 @@ class MainActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-        if (fineLocationGranted) {
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (fineGranted || coarseGranted) {
             startTrackingService()
             startDirectLocationUpdates()
         } else {
@@ -427,6 +455,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("iNAV_CRASH", "FATAL EXCEPTION on thread ${thread.name}: ${throwable.message}", throwable)
+        }
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -475,6 +506,75 @@ class MainActivity : AppCompatActivity() {
                 isCompassEnabled = false // We have our own compass FAB
                 isAttributionEnabled = false
                 isLogoEnabled = false
+            }
+
+            // Google Maps-like 3D Perspective settings & gesture tuning
+            map.setMinPitchPreference(0.0)
+            map.setMaxPitchPreference(60.0)
+
+            try {
+                map.gesturesManager?.shoveGestureDetector?.apply {
+                    isEnabled = true
+                    maxShoveAngle = 45.0f
+                    pixelDeltaThreshold = 8.0f
+                }
+            } catch (e: Throwable) {
+                Log.w(TAG, "Could not tune shoveGestureDetector: ${e.message}")
+            }
+
+            // Real-time gesture listeners to eliminate annotation flicker & synchronize compass needle
+            map.addOnRotateListener(object : MapLibreMap.OnRotateListener {
+                override fun onRotateBegin(detector: org.maplibre.android.gestures.RotateGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onRotate(detector: org.maplibre.android.gestures.RotateGestureDetector) {
+                    isUserGesturing = true
+                    binding.fabCompass.rotation = -map.cameraPosition.bearing.toFloat()
+                }
+                override fun onRotateEnd(detector: org.maplibre.android.gestures.RotateGestureDetector) {
+                    isUserGesturing = false
+                }
+            })
+
+            map.addOnShoveListener(object : MapLibreMap.OnShoveListener {
+                override fun onShoveBegin(detector: org.maplibre.android.gestures.ShoveGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onShove(detector: org.maplibre.android.gestures.ShoveGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onShoveEnd(detector: org.maplibre.android.gestures.ShoveGestureDetector) {
+                    isUserGesturing = false
+                }
+            })
+
+            map.addOnScaleListener(object : MapLibreMap.OnScaleListener {
+                override fun onScaleBegin(detector: org.maplibre.android.gestures.StandardScaleGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onScale(detector: org.maplibre.android.gestures.StandardScaleGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onScaleEnd(detector: org.maplibre.android.gestures.StandardScaleGestureDetector) {
+                    isUserGesturing = false
+                }
+            })
+
+            map.addOnMoveListener(object : MapLibreMap.OnMoveListener {
+                override fun onMoveBegin(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onMove(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                    isUserGesturing = true
+                }
+                override fun onMoveEnd(detector: org.maplibre.android.gestures.MoveGestureDetector) {
+                    isUserGesturing = false
+                }
+            })
+
+            map.addOnCameraIdleListener {
+                isUserGesturing = false
+                binding.fabCompass.rotation = -map.cameraPosition.bearing.toFloat()
             }
 
             // Load vector tile style (Voyager Light by default matching user screenshot)
@@ -532,15 +632,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getBitmapFromDrawable(drawableId: Int, widthDp: Int = 72, heightDp: Int = 72): Bitmap? {
-        val drawable = ContextCompat.getDrawable(this, drawableId) ?: return null
-        val density = resources.displayMetrics.density
-        val w = (widthDp * density).toInt().coerceAtLeast(1)
-        val h = (heightDp * density).toInt().coerceAtLeast(1)
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-        return bitmap
+        return try {
+            val drawable = ContextCompat.getDrawable(this, drawableId) ?: return null
+            val density = resources.displayMetrics.density
+            val w = (widthDp * density).toInt().coerceAtLeast(1)
+            val h = (heightDp * density).toInt().coerceAtLeast(1)
+            val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bitmap
+        } catch (e: Throwable) {
+            Log.e(TAG, "Error creating bitmap from drawable $drawableId: ${e.message}")
+            null
+        }
     }
 
     private fun loadMarkerIcons(style: Style) {
@@ -569,34 +674,65 @@ class MainActivity : AppCompatActivity() {
         try {
             symbolManager?.deleteAll()
             symbolManager?.onDestroy()
-            symbolManager = null
-        } catch (e: Exception) {}
+        } catch (t: Throwable) {
+            Log.w(TAG, "Safe cleanup symbolManager: ${t.message}")
+        }
         try {
             lineManager?.deleteAll()
             lineManager?.onDestroy()
-            lineManager = null
-        } catch (e: Exception) {}
+        } catch (t: Throwable) {
+            Log.w(TAG, "Safe cleanup lineManager: ${t.message}")
+        }
         try {
             fillManager?.deleteAll()
             fillManager?.onDestroy()
-            fillManager = null
-        } catch (e: Exception) {}
+        } catch (t: Throwable) {
+            Log.w(TAG, "Safe cleanup fillManager: ${t.message}")
+        }
+        symbolManager = null
+        lineManager = null
+        fillManager = null
         vehicleSymbol = null
         destSymbol = null
         startSymbol = null
         turnWaypointSymbol = null
         ghostFrozenSymbol = null
+        trajectoryLine = null
+        trajectoryGlowLine = null
+        routeCasingLine = null
+        routeLine = null
+        routeDashLine = null
+        ghostLine = null
+        uncertaintyFill = null
     }
 
     private fun setupAnnotationManagers(map: MapLibreMap, style: Style) {
-        cleanupAnnotationManagers()
+        // Do NOT call cleanupAnnotationManagers() here because the old C++ style has already
+        // been destroyed by MapLibre, making old layer native pointers dangling (causing SIGSEGV in Layer.getId).
+        // Instead, cleanupAnnotationManagers() is called BEFORE map.setStyle() is initiated.
+        symbolManager = null
+        lineManager = null
+        fillManager = null
+        vehicleSymbol = null
+        destSymbol = null
+        startSymbol = null
+        turnWaypointSymbol = null
+        ghostFrozenSymbol = null
+        trajectoryLine = null
+        trajectoryGlowLine = null
+        routeCasingLine = null
+        routeLine = null
+        routeDashLine = null
+        ghostLine = null
+        uncertaintyFill = null
+
         // Order matters: fills first (bottom), then lines, then symbols (top)
         fillManager = FillManager(mapView, map, style)
         lineManager = LineManager(mapView, map, style)
         symbolManager = SymbolManager(mapView, map, style).apply {
             iconAllowOverlap = true
             iconIgnorePlacement = true
-            iconPitchAlignment = Property.ICON_PITCH_ALIGNMENT_VIEWPORT
+            iconPitchAlignment = Property.ICON_PITCH_ALIGNMENT_MAP
             iconRotationAlignment = Property.ICON_ROTATION_ALIGNMENT_MAP
         }
 
@@ -642,9 +778,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createInitialAnnotations() {
-        val lm = lineManager ?: return
-        val fm = fillManager ?: return
-        val sm = symbolManager ?: return
+        try {
+            val lm = lineManager ?: return
+            val fm = fillManager ?: return
+            val sm = symbolManager ?: return
 
         // Single iconic pointer mode: keep map clean without overlapping uncertainty blobs
         uncertaintyFill = fm.create(FillOptions()
@@ -708,6 +845,9 @@ class MainActivity : AppCompatActivity() {
             .withIconSize(1.0f)
             .withIconRotate(0f)
         )
+        } catch (e: Throwable) {
+            Log.e(TAG, "Error creating initial annotations: ${e.message}")
+        }
     }
 
     private fun applyDemoManhattan(map: MapLibreMap) {
@@ -871,6 +1011,31 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnSearchIcon.setOnClickListener { executeSearch() }
 
+        // Calibration Screen Actions (Phase 12B)
+        binding.btnStartNavigation.setOnClickListener {
+            setScreenState(AppScreenState.HOME)
+        }
+
+        binding.btnToggleCalibDebug.setOnClickListener {
+            val panel = binding.containerCalibDebugPanel
+            if (panel.visibility == View.VISIBLE) {
+                panel.visibility = View.GONE
+                binding.btnToggleCalibDebug.text = "🛠 DEVELOPER DIAGNOSTICS [▲]"
+            } else {
+                panel.visibility = View.VISIBLE
+                binding.btnToggleCalibDebug.text = "🛠 DEVELOPER DIAGNOSTICS [▼]"
+            }
+        }
+
+        // Recalibrate Button (Apple Capsule Map Controls)
+        binding.btnHomeRecalibrate.setOnClickListener {
+            Toast.makeText(this, "Starting 15s Sensor Recalibration...", Toast.LENGTH_SHORT).show()
+            hasAutoTransitionedFromCalibration = false
+            binding.btnStartNavigation.visibility = View.GONE
+            service?.calibrationManager?.forceRecalibration("User tapped recalibrate button")
+            setScreenState(AppScreenState.CALIBRATION)
+        }
+
         binding.etSearchDestination.setOnClickListener {
             if (binding.etSearchDestination.text.isNullOrEmpty()) {
                 displaySearchSuggestions(getRouteMgr().presetPlaces)
@@ -935,12 +1100,14 @@ class MainActivity : AppCompatActivity() {
             fetchPhysicalLocationAndCenter(forceCenter = true)
         }
 
-        // Map Layers toggle FAB
+        // Map Layers toggle FAB (Interchanges between Satellite and White Mode)
         binding.fabLayers.setOnClickListener {
             if (currentViewType == MapViewType.OSM_VIEW) {
                 setMapLayer(MapViewType.SATELLITE_VIEW)
+                Toast.makeText(this, "🛰 Satellite Mode", Toast.LENGTH_SHORT).show()
             } else {
                 setMapLayer(MapViewType.OSM_VIEW)
+                Toast.makeText(this, "🗺 White Mode", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -983,18 +1150,9 @@ class MainActivity : AppCompatActivity() {
         binding.gmapsNavHeader.setOnClickListener { cycleManeuver() }
         binding.cardTopNav.setOnClickListener { cycleManeuver() }
 
-        // Light / Dark Theme Mode Toggle on Blue Shield Button
+        // Safe Driving Assist on Blue Shield Button
         binding.btnShieldSafety.setOnClickListener {
-            isLightMode = !isLightMode
-            val targetStyle = if (isLightMode) STYLE_LIGHT else STYLE_DARK
-            mapLibreMap?.let { map ->
-                map.setStyle(targetStyle) { style ->
-                    reinitializeMapAnnotations(map, style)
-                }
-            }
-            applyThemeMode()
-            val modeName = if (isLightMode) "☀️ Light Mode" else "🌙 Dark Mode"
-            Toast.makeText(this, "$modeName Active", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "🛡 Safe Driving Assist: Active", Toast.LENGTH_SHORT).show()
         }
 
         // Bookmark, Coffee, and Reroute FABs matching User Screenshot
@@ -1047,7 +1205,7 @@ class MainActivity : AppCompatActivity() {
             startNavigationToPlace("Rajwada Historic Palace", "M.G. Road, Indore", 0)
         }
         binding.btnRecentGas.setOnClickListener {
-            startNavigationToPlace("Devi Ahilya Bai Holkar Airport", "Depalpur Road, Indore", 0)
+            startNavigationToPlace("Police Welfare Filling Station", "Airport Rd, near Bank of India, Ramchandra Nagar Chowraha", 0)
         }
 
         // Recents More (•••) overflow buttons
@@ -1058,7 +1216,7 @@ class MainActivity : AppCompatActivity() {
             showPlaceDetailsSheet("Rajwada Historic Palace", "M.G. Road, Indore", "Historic Royal Palace", "4.8 ★", R.drawable.ic_dest_pin)
         }
         binding.btnMoreGas.setOnClickListener {
-            showPlaceDetailsSheet("Devi Ahilya Bai Holkar Airport", "Depalpur Road, Indore", "International Airport", "4.7 ★", R.drawable.ic_dest_pin)
+            showPlaceDetailsSheet("Police Welfare Filling Station", "PRFM+3Q2, Airport Rd, near Bank of India, Ramchandra Nagar Chowraha, Indore", "Fuel & EV Station", "4.8 ★", R.drawable.ic_dest_pin)
         }
         binding.btnMoreFavorites.setOnClickListener {
             showFavoritesGuideSheet()
@@ -1112,10 +1270,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnHomeLayers.setOnClickListener {
             if (currentViewType == MapViewType.OSM_VIEW) {
                 setMapLayer(MapViewType.SATELLITE_VIEW)
-                Toast.makeText(this, "🛰 Satellite View Active", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "🛰 Satellite Mode", Toast.LENGTH_SHORT).show()
             } else {
                 setMapLayer(MapViewType.OSM_VIEW)
-                Toast.makeText(this, "🗺 Vector Map Active", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "🗺 White Mode", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -1153,8 +1311,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnCtrlLayers.setOnClickListener {
             if (currentViewType == MapViewType.OSM_VIEW) {
                 setMapLayer(MapViewType.SATELLITE_VIEW)
+                Toast.makeText(this, "🛰 Satellite Mode", Toast.LENGTH_SHORT).show()
             } else {
                 setMapLayer(MapViewType.OSM_VIEW)
+                Toast.makeText(this, "🗺 White Mode", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -1181,12 +1341,8 @@ class MainActivity : AppCompatActivity() {
         binding.btnOutageResume.setOnClickListener { toggleOutageAction() }
         binding.outageBanner.setOnClickListener { toggleOutageAction() }
 
-        // Expandable Live Sensors Cockpit Toggle
-        binding.headerToggleSensors.setOnClickListener {
-            val isVisible = binding.containerSensorsDetail.visibility == View.VISIBLE
-            binding.containerSensorsDetail.visibility = if (isVisible) View.GONE else View.VISIBLE
-            binding.tvSensorsToggleLabel.text = if (isVisible) "Sensors" else "Sensors ▲"
-        }
+        // Expandable Live Sensors Cockpit Toggle & Swipe Gestures
+        setupSensorsExpansionGestures()
 
         binding.hudContainer.setOnClickListener {
             isHudActive = false
@@ -1202,6 +1358,10 @@ class MainActivity : AppCompatActivity() {
                     binding.hudContainer.visibility = View.GONE
                     return
                 }
+                if (currentScreenState == AppScreenState.CALIBRATION) {
+                    setScreenState(AppScreenState.HOME)
+                    return
+                }
                 if (currentScreenState == AppScreenState.NAVIGATION) {
                     setScreenState(AppScreenState.HOME)
                 } else if (currentScreenState == AppScreenState.HOME && isHomeSheetExpanded) {
@@ -1214,14 +1374,19 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // Initialize in Apple Maps Home Screen
-        setScreenState(AppScreenState.HOME)
+        // Initialize in Startup Calibration Screen (Phase 12B)
+        setScreenState(AppScreenState.CALIBRATION)
     }
 
     private var homeSheetTouchStartY = 0f
     private var homeSheetTouchStartX = 0f
     private var isTrackingHomeSheetDrag = false
     private var hasTriggeredHomeSheetDrag = false
+
+    private var tripSheetTouchStartY = 0f
+    private var tripSheetTouchStartX = 0f
+    private var isTrackingTripSheetDrag = false
+    private var hasTriggeredTripSheetDrag = false
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
         if (currentScreenState == AppScreenState.HOME) {
@@ -1267,8 +1432,82 @@ class MainActivity : AppCompatActivity() {
                     hasTriggeredHomeSheetDrag = false
                 }
             }
+        } else if (currentScreenState == AppScreenState.NAVIGATION) {
+            val cockpitRect = Rect()
+            binding.cardTripCockpit.getGlobalVisibleRect(cockpitRect)
+
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    tripSheetTouchStartY = ev.rawY
+                    tripSheetTouchStartX = ev.rawX
+                    hasTriggeredTripSheetDrag = false
+                    isTrackingTripSheetDrag = (cockpitRect.top > 0) && (ev.rawY >= cockpitRect.top && ev.rawY <= cockpitRect.bottom)
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (isTrackingTripSheetDrag && !hasTriggeredTripSheetDrag) {
+                        val dy = ev.rawY - tripSheetTouchStartY
+                        val dx = ev.rawX - tripSheetTouchStartX
+
+                        // Dominant vertical swipe by at least 18dp
+                        if (kotlin.math.abs(dy) > kotlin.math.abs(dx) && kotlin.math.abs(dy) > dpToPx(18)) {
+                            if (dy < 0 && binding.containerSensorsDetail.visibility != View.VISIBLE) {
+                                // Swipe UP -> Expand sensors cockpit!
+                                expandSensorsCockpit()
+                                hasTriggeredTripSheetDrag = true
+                            } else if (dy > 0 && binding.containerSensorsDetail.visibility == View.VISIBLE) {
+                                // Swipe DOWN from upper cockpit area -> Collapse sensors!
+                                if (tripSheetTouchStartY <= cockpitRect.top + dpToPx(130) || dy > dpToPx(35)) {
+                                    collapseSensorsCockpit()
+                                    hasTriggeredTripSheetDrag = true
+                                }
+                            }
+                        }
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    isTrackingTripSheetDrag = false
+                    hasTriggeredTripSheetDrag = false
+                }
+            }
         }
         return super.dispatchTouchEvent(ev)
+    }
+
+    private fun collapseSensorsCockpit() {
+        if (binding.containerSensorsDetail.visibility != View.VISIBLE) return
+        androidx.transition.TransitionManager.beginDelayedTransition(
+            binding.cardTripCockpit,
+            androidx.transition.AutoTransition().apply {
+                duration = 240
+            }
+        )
+        binding.containerSensorsDetail.visibility = View.GONE
+        binding.tvSensorsToggleLabel.text = "VOYAGER OS"
+    }
+
+    private fun expandSensorsCockpit() {
+        if (binding.containerSensorsDetail.visibility == View.VISIBLE) return
+        androidx.transition.TransitionManager.beginDelayedTransition(
+            binding.cardTripCockpit,
+            androidx.transition.AutoTransition().apply {
+                duration = 240
+            }
+        )
+        binding.containerSensorsDetail.visibility = View.VISIBLE
+        binding.tvSensorsToggleLabel.text = "VOYAGER OS ▲"
+    }
+
+    private fun toggleSensorsCockpit() {
+        if (binding.containerSensorsDetail.visibility == View.VISIBLE) {
+            collapseSensorsCockpit()
+        } else {
+            expandSensorsCockpit()
+        }
+    }
+
+    private fun setupSensorsExpansionGestures() {
+        binding.headerToggleSensors.setOnClickListener { toggleSensorsCockpit() }
+        binding.pillTripCockpitHandle.setOnClickListener { toggleSensorsCockpit() }
     }
 
     private fun collapseHomeSheet() {
@@ -1316,7 +1555,24 @@ class MainActivity : AppCompatActivity() {
     private fun setScreenState(state: AppScreenState) {
         currentScreenState = state
         when (state) {
+            AppScreenState.CALIBRATION -> {
+                binding.containerCalibrationScreen.visibility = View.VISIBLE
+                binding.containerHomeSheet.visibility = View.GONE
+                binding.pillWeather.visibility = View.GONE
+                binding.clusterHomeControls.visibility = View.GONE
+                binding.cardTopNav.visibility = View.GONE
+                binding.containerFloatingLanes.visibility = View.GONE
+                binding.pillCurrentStreet.visibility = View.GONE
+                binding.clusterSpeedTelemetry.visibility = View.GONE
+                binding.clusterRightControls.visibility = View.GONE
+                binding.cardTripCockpit.visibility = View.GONE
+                binding.outageBanner.visibility = View.GONE
+                binding.cardLandmarkCallout.visibility = View.GONE
+                binding.tvAudioTooltip.visibility = View.GONE
+                androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
+            }
             AppScreenState.HOME -> {
+                binding.containerCalibrationScreen.visibility = View.GONE
                 // 1. Show Apple Maps Home UI
                 binding.containerHomeSheet.visibility = View.VISIBLE
                 binding.pillWeather.visibility = View.VISIBLE
@@ -1354,6 +1610,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             AppScreenState.NAVIGATION -> {
+                binding.containerCalibrationScreen.visibility = View.GONE
                 // 1. Hide Apple Maps Home UI
                 binding.containerHomeSheet.visibility = View.GONE
                 binding.pillWeather.visibility = View.GONE
@@ -1391,6 +1648,11 @@ class MainActivity : AppCompatActivity() {
                     renderDynamicManeuver(currentManeuver)
                 }
                 applyThemeMode()
+
+                isFollowingVehicle = true
+                isUserGesturing = false
+                hasInitialCentered = false
+                binding.fabMyLocation.setColorFilter(Color.parseColor("#00E676"))
 
                 // Animate camera to 3D Navigation perspective
                 mapLibreMap?.let { map ->
@@ -1631,6 +1893,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         val places = listOf(
+            Triple("Police Welfare Filling Station", "Airport Rd, near Bank of India, Ramchandra Nagar Chowraha", 0),
             Triple("Indore Junction Railway Station", "Chhoti Gwaltoli, Indore", 0),
             Triple("Rajwada Historic Palace", "M.G. Road, Indore", 0),
             Triple("Devi Ahilya Bai Holkar Airport", "Depalpur Road, Indore", 0)
@@ -2375,10 +2638,8 @@ class MainActivity : AppCompatActivity() {
         })
         root.addView(createOptionRow("📊", "Live Sensors Cockpit", "VOYAGER OS IMU, Attitude & EKF Telemetry") {
             dialog.dismiss()
-            val isVis = binding.containerSensorsDetail.visibility == View.VISIBLE
-            binding.containerSensorsDetail.visibility = if (isVis) View.GONE else View.VISIBLE
-            binding.headerToggleSensors.visibility = View.VISIBLE
-            Toast.makeText(this@MainActivity, if (isVis) "Sensors Hidden" else "Sensors Visible", Toast.LENGTH_SHORT).show()
+            toggleSensorsCockpit()
+            Toast.makeText(this@MainActivity, if (binding.containerSensorsDetail.visibility == View.VISIBLE) "Sensors Visible" else "Sensors Hidden", Toast.LENGTH_SHORT).show()
         })
         root.addView(createOptionRow("⚠️", "Tactical GPS Blackout Simulator", "Google Maps frozen vs iNAV 15-State ES-EKF Dead Reckoning") {
             dialog.dismiss()
@@ -2867,8 +3128,7 @@ class MainActivity : AppCompatActivity() {
             binding.tvSpeedLimitValue.text = "40"
             binding.cardLandmarkCallout.visibility = View.GONE
             binding.tvAudioTooltip.visibility = View.GONE
-            binding.headerToggleSensors.visibility = View.GONE
-            binding.containerSensorsDetail.visibility = View.GONE
+            binding.headerToggleSensors.visibility = View.VISIBLE
             binding.tvRoadSnappedBadge.visibility = View.GONE
         } else {
             binding.cardTripCockpit.setBackgroundResource(R.drawable.bg_sheet_trip_dark)
@@ -2879,7 +3139,7 @@ class MainActivity : AppCompatActivity() {
             binding.tvCurrentStreetLabel.setTextColor(Color.parseColor("#F4F4F5"))
             binding.pillCurrentStreet.visibility = View.VISIBLE
             binding.tvSpeedLimitValue.text = "40"
-            binding.headerToggleSensors.visibility = View.GONE
+            binding.headerToggleSensors.visibility = View.VISIBLE
             binding.cardLandmarkCallout.visibility = View.GONE
             binding.tvRoadSnappedBadge.visibility = View.GONE
         }
@@ -2961,9 +3221,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun startNavigationTo(lat: Double, lon: Double, name: String) {
         Toast.makeText(this, "Calculating route to $name...", Toast.LENGTH_SHORT).show()
+        val curLat = vehicleSymbol?.latLng?.latitude?.takeIf { it != 0.0 }
+            ?: currentPhysicalLocation?.latitude?.takeIf { it != 0.0 }
+            ?: getCurLatFallback()
+        val curLon = vehicleSymbol?.latLng?.longitude?.takeIf { it != 0.0 }
+            ?: currentPhysicalLocation?.longitude?.takeIf { it != 0.0 }
+            ?: getCurLonFallback()
         val s = service
         if (s != null) {
             s.startRoute(
+                startLat = curLat,
+                startLon = curLon,
                 destLat = lat,
                 destLon = lon,
                 destName = name,
@@ -2971,8 +3239,6 @@ class MainActivity : AppCompatActivity() {
                 onError = { err -> Toast.makeText(this@MainActivity, "Routing notice: $err", Toast.LENGTH_SHORT).show() }
             )
         } else {
-            val curLat = getCurLatFallback()
-            val curLon = getCurLonFallback()
             RouteManager().requestRoute(
                 startLat = curLat,
                 startLon = curLon,
@@ -2987,27 +3253,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getCurLatFallback(): Double =
-        service?.navState?.value?.latitude?.takeIf { it != 0.0 } ?: (vehicleSymbol?.latLng?.latitude ?: 0.0)
+        currentPhysicalLocation?.latitude?.takeIf { it != 0.0 }
+            ?: service?.navState?.value?.latitude?.takeIf { it != 0.0 }
+            ?: (vehicleSymbol?.latLng?.latitude ?: 0.0)
 
     private fun getCurLonFallback(): Double =
-        service?.navState?.value?.longitude?.takeIf { it != 0.0 } ?: (vehicleSymbol?.latLng?.longitude ?: 0.0)
+        currentPhysicalLocation?.longitude?.takeIf { it != 0.0 }
+            ?: service?.navState?.value?.longitude?.takeIf { it != 0.0 }
+            ?: (vehicleSymbol?.latLng?.longitude ?: 0.0)
 
     private fun renderRoutePlan(plan: RoutePlan) {
         val sm = symbolManager ?: return
         val lm = lineManager ?: return
 
-        val startGeo = if (plan.startLat != 0.0 && plan.startLon != 0.0) {
-            LatLng(plan.startLat, plan.startLon)
-        } else {
-            vehicleSymbol?.latLng ?: LatLng(0.0, 0.0)
-        }
+        // Always use the live vehicle marker as the authoritative route origin
+        val startGeo = vehicleSymbol?.latLng?.takeIf { it.latitude != 0.0 && it.longitude != 0.0 }
+            ?: (currentPhysicalLocation?.let { LatLng(it.latitude, it.longitude) })
+            ?: (if (plan.startLat != 0.0 && plan.startLon != 0.0) LatLng(plan.startLat, plan.startLon) else LatLng(0.0, 0.0))
         val destGeo = LatLng(plan.destLat, plan.destLon)
 
         // Build route point list from RoutePlan (which uses osmdroid GeoPoints internally)
         routePoints.clear()
         if (plan.points.isNotEmpty()) {
-            val firstPt = plan.points.first()
-            if (kotlin.math.abs(firstPt.latitude - startGeo.latitude) > 0.00001 || kotlin.math.abs(firstPt.longitude - startGeo.longitude) > 0.00001) {
+            if (startGeo.latitude != 0.0 && startGeo.longitude != 0.0) {
                 routePoints.add(startGeo)
             }
             for (gp in plan.points) {
@@ -3018,7 +3286,9 @@ class MainActivity : AppCompatActivity() {
                 routePoints.add(destGeo)
             }
         } else {
-            routePoints.add(startGeo)
+            if (startGeo.latitude != 0.0 && startGeo.longitude != 0.0) {
+                routePoints.add(startGeo)
+            }
             routePoints.add(destGeo)
         }
 
@@ -3111,6 +3381,10 @@ class MainActivity : AppCompatActivity() {
             String.format("Route loaded: %.1f km to %s", plan.totalDistanceM / 1000.0, plan.destinationName),
             Toast.LENGTH_SHORT
         ).show()
+        isFollowingVehicle = true
+        isUserGesturing = false
+        hasInitialCentered = false
+        binding.fabMyLocation.setColorFilter(Color.parseColor("#00E676"))
         setScreenState(AppScreenState.NAVIGATION)
     }
 
@@ -3150,36 +3424,163 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions.add(Manifest.permission.HIGH_SAMPLING_RATE_SENSORS)
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
-        val missing = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
+        val hasFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-        if (missing.isEmpty()) {
+        if (hasFine || hasCoarse) {
             startTrackingService()
             startDirectLocationUpdates()
         } else {
+            val missing = permissions.filter {
+                ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+            }
             permissionLauncher.launch(missing.toTypedArray())
         }
     }
 
     private fun startTrackingService() {
-        val intent = Intent(this, DeadReckoningService::class.java)
-        ContextCompat.startForegroundService(this, intent)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        try {
+            val intent = Intent(this, DeadReckoningService::class.java)
+            ContextCompat.startForegroundService(this, intent)
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Error starting tracking service: ${e.message}", e)
+        }
     }
+
+    private var hasAutoTransitionedFromCalibration = false
 
     private fun observeServiceState() {
         lifecycleScope.launch {
             service?.navState?.collectLatest { state ->
                 updateUi(state)
             }
+        }
+        lifecycleScope.launch {
+            service?.calibrationManager?.state?.collectLatest { calibState ->
+                // Auto-switch to CALIBRATION if recalibration was triggered (via button, tilt shift, or expiry)
+                if ((calibState.status == com.inav.navigation.calibration.CalibrationStatus.COLLECTING ||
+                     calibState.status == com.inav.navigation.calibration.CalibrationStatus.PAUSED_MOTION) &&
+                    currentScreenState != AppScreenState.CALIBRATION) {
+                    hasAutoTransitionedFromCalibration = false
+                    setScreenState(AppScreenState.CALIBRATION)
+                }
+                updateCalibrationUi(calibState)
+            }
+        }
+    }
+
+    private fun updateCalibrationUi(state: com.inav.navigation.calibration.CalibrationState) {
+        if (currentScreenState != AppScreenState.CALIBRATION) return
+
+        // 1. Dial progress and timer
+        binding.viewAppleClockTimer.setProgress(state.progress)
+        binding.viewAppleClockTimer.setTimeRemaining(state.remainingSec)
+        binding.tvCalibStatusDetail.text = state.statusText
+
+        // 2. Dial themes based on status
+        when (state.status) {
+            com.inav.navigation.calibration.CalibrationStatus.PAUSED_MOTION -> {
+                binding.viewAppleClockTimer.setMotionWarningTheme()
+            }
+            com.inav.navigation.calibration.CalibrationStatus.COMPLETED -> {
+                binding.viewAppleClockTimer.setCompletedTheme()
+            }
+            else -> {
+                binding.viewAppleClockTimer.setNormalTheme()
+            }
+        }
+
+        // 3. Checklist Icons & Labels
+        if (state.status == com.inav.navigation.calibration.CalibrationStatus.COMPLETED) {
+            binding.tvCalibTitle.text = "Calibration Complete"
+            binding.tvCalibSubtitle.text = "Sensors calibrated and leveled to vehicle body.\nNavigation is primed and ready."
+
+            binding.ivCheckSensors.setImageResource(R.drawable.ic_check_circle)
+            binding.tvCheckSensors.text = "✓ Phone orientation detected"
+            binding.tvCheckSensors.setTextColor(android.graphics.Color.parseColor("#00E676"))
+
+            binding.ivCheckGravity.setImageResource(R.drawable.ic_check_circle)
+            binding.tvCheckGravity.text = "✓ Accelerometer calibrated"
+            binding.tvCheckGravity.setTextColor(android.graphics.Color.parseColor("#00E676"))
+
+            binding.ivCheckGyro.setImageResource(R.drawable.ic_check_circle)
+            binding.tvCheckGyro.text = "✓ Gyroscope calibrated"
+            binding.tvCheckGyro.setTextColor(android.graphics.Color.parseColor("#00E676"))
+
+            binding.ivCheckAlignment.setImageResource(R.drawable.ic_check_circle)
+            binding.tvCheckAlignment.text = "✓ Navigation ready"
+            binding.tvCheckAlignment.setTextColor(android.graphics.Color.parseColor("#00E676"))
+
+            binding.btnStartNavigation.visibility = View.VISIBLE
+
+            if (!hasAutoTransitionedFromCalibration) {
+                hasAutoTransitionedFromCalibration = true
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(2500)
+                    if (currentScreenState == AppScreenState.CALIBRATION) {
+                        setScreenState(AppScreenState.HOME)
+                    }
+                }
+            }
+        } else {
+            binding.tvCalibTitle.text = "Preparing Navigation"
+            binding.tvCalibSubtitle.text = "Keep your phone securely mounted.\nKeep the vehicle stationary while we\ncalibrate sensors."
+            binding.btnStartNavigation.visibility = View.GONE
+
+            // Live Checklist progression
+            if (state.checklistSensors) {
+                binding.ivCheckSensors.setImageResource(R.drawable.ic_check_circle)
+                binding.tvCheckSensors.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                binding.ivCheckSensors.setImageResource(R.drawable.ic_circle_outline)
+                binding.tvCheckSensors.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            }
+
+            if (state.checklistGravity) {
+                binding.ivCheckGravity.setImageResource(R.drawable.ic_check_circle)
+                binding.tvCheckGravity.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                binding.ivCheckGravity.setImageResource(R.drawable.ic_circle_outline)
+                binding.tvCheckGravity.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            }
+
+            if (state.checklistGyro) {
+                binding.ivCheckGyro.setImageResource(R.drawable.ic_check_circle)
+                binding.tvCheckGyro.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                binding.ivCheckGyro.setImageResource(R.drawable.ic_circle_outline)
+                binding.tvCheckGyro.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            }
+
+            if (state.checklistAlignment) {
+                binding.ivCheckAlignment.setImageResource(R.drawable.ic_check_circle)
+                binding.tvCheckAlignment.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                binding.ivCheckAlignment.setImageResource(R.drawable.ic_circle_outline)
+                binding.tvCheckAlignment.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            }
+        }
+
+        // 4. Developer / Debug Calibration Panel
+        binding.tvDebugSamples.text = "Duration: %.1fs | Samples: %d".format(state.elapsedStationarySec, state.samplesCollected)
+        val res = state.result
+        if (res != null) {
+            binding.tvDebugGyroBias.text = "Gyro Bias: [%.4f, %.4f, %.4f] rad/s".format(res.gyroBiasX, res.gyroBiasY, res.gyroBiasZ)
+            binding.tvDebugGyroStd.text = "Gyro StdDev: %.4f rad/s (Conf: %.1f%%)".format(res.gyroStdDev, res.gyroConfidence * 100)
+            binding.tvDebugAccelMean.text = "Mean Accel: [%.2f, %.2f, %.2f] m/s²".format(res.meanAccelX, res.meanAccelY, res.meanAccelZ)
+            binding.tvDebugGravityMag.text = "|g|: %.3f m/s² (Conf: %.1f%%)".format(res.gravityMagnitude, res.accelConfidence * 100)
+            binding.tvDebugAccelVar.text = "Accel Var: %.4f (m/s²)²".format(res.accelVariance)
+            binding.tvDebugStatConf.text = "Stationary Conf: %.1f%%".format(res.stationaryConfidence * 100)
+            binding.tvDebugAttitude.text = "Attitude: Pitch = %.1f°, Roll = %.1f°".format(res.pitchDeg, res.rollDeg)
+            binding.tvDebugYawStatus.text = "Yaw: ${res.yawStatus}"
+            binding.tvDebugAlignConf.text = "Alignment Confidence: %.1f%%".format(res.alignmentConfidence * 100)
+        } else {
+            binding.tvDebugStatConf.text = if (state.isStationary) "Stationary: YES" else "Stationary: NO (Motion detected)"
         }
     }
 
@@ -3208,21 +3609,65 @@ class MainActivity : AppCompatActivity() {
         val lm = lineManager ?: return
         val fm = fillManager ?: return
 
-        if (currentScreenState == AppScreenState.HOME) {
+        if (currentScreenState == AppScreenState.HOME || currentScreenState == AppScreenState.CALIBRATION) {
             return
         }
 
-        // Active position selection (road-snapped vs raw)
-        val activeLat = if (state.isRoadSnapped && state.speedKmh >= 2.0 && state.snappedLatitude != 0.0) {
-            state.snappedLatitude
+        // Robust coordinate arbitration: protect against stale UKF / divergence
+        val liveGps = currentPhysicalLocation
+        val hasLiveGps = liveGps != null && liveGps.latitude != 0.0 && liveGps.longitude != 0.0 && liveGps.accuracy < 50f
+
+        val navStateLat = state.latitude
+        val navStateLon = state.longitude
+        val stateValid = navStateLat != 0.0 && navStateLon != 0.0
+
+        var baseNavLat: Double
+        var baseNavLon: Double
+
+        if (state.mode == NavigationMode.PURE_DR || state.isOutageSimulated) {
+            baseNavLat = if (stateValid) navStateLat else (liveGps?.latitude ?: 22.7196)
+            baseNavLon = if (stateValid) navStateLon else (liveGps?.longitude ?: 75.8577)
         } else {
-            state.latitude
+            if (hasLiveGps) {
+                if (stateValid) {
+                    val distFromLiveGps = FloatArray(1)
+                    android.location.Location.distanceBetween(navStateLat, navStateLon, liveGps!!.latitude, liveGps.longitude, distFromLiveGps)
+                    if (distFromLiveGps[0] > 25f) {
+                        baseNavLat = liveGps.latitude
+                        baseNavLon = liveGps.longitude
+                    } else {
+                        baseNavLat = navStateLat
+                        baseNavLon = navStateLon
+                    }
+                } else {
+                    baseNavLat = liveGps!!.latitude
+                    baseNavLon = liveGps.longitude
+                }
+            } else {
+                baseNavLat = if (stateValid) navStateLat else 22.7196
+                baseNavLon = if (stateValid) navStateLon else 75.8577
+            }
         }
-        val activeLon = if (state.isRoadSnapped && state.speedKmh >= 2.0 && state.snappedLongitude != 0.0) {
-            state.snappedLongitude
+
+        // Road snapping should only snap if within 35m of baseNavLat, baseNavLon
+        val canSnap = state.isRoadSnapped && state.speedKmh >= 2.0 && state.snappedLatitude != 0.0 && state.snappedLongitude != 0.0
+        val activeLat: Double
+        val activeLon: Double
+        if (canSnap) {
+            val distToSnap = FloatArray(1)
+            android.location.Location.distanceBetween(baseNavLat, baseNavLon, state.snappedLatitude, state.snappedLongitude, distToSnap)
+            if (distToSnap[0] <= 35f) {
+                activeLat = state.snappedLatitude
+                activeLon = state.snappedLongitude
+            } else {
+                activeLat = baseNavLat
+                activeLon = baseNavLon
+            }
         } else {
-            state.longitude
+            activeLat = baseNavLat
+            activeLon = baseNavLon
         }
+
         val rawHeading = if (state.speedKmh > 5.0 && state.isRoadSnapped && state.snappedHeadingDeg != 0.0) {
             state.snappedHeadingDeg
         } else {
@@ -3237,13 +3682,8 @@ class MainActivity : AppCompatActivity() {
         displayHeading = slewHeading(displayHeading, rawHeading.toFloat(), maxStep)
         val activeHeading = displayHeading.toDouble()
 
-        // Auto Night Mode
-        val shouldBeNight = state.lightLux < NIGHT_MODE_LUX_THRESHOLD || state.isTunnelLighting
-        if (shouldBeNight != isNightMode && (now - lastNightModeSwitch) > NIGHT_MODE_DEBOUNCE_MS) {
-            isNightMode = shouldBeNight
-            lastNightModeSwitch = now
-            applyNightMode()
-        }
+        // Auto Night Mode (Disabled: White mode active)
+        // Dark mode is disabled so it will not trigger automatically
 
         // 1. TOP NAVIGATION STATUS BAR & TURN GUIDANCE
         if (state.hasActiveRoute) {
@@ -3323,6 +3763,46 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 3. ALL SENSORS LIVE STREAM COCKPIT
+        // ── High-Visibility Bordered Sensor Tiles (Judges Presentation Cockpit) ──
+        binding.tvValAccelX.text = String.format(java.util.Locale.US, "%+.2f", state.accelX)
+        binding.tvValAccelY.text = String.format(java.util.Locale.US, "%+.2f", state.accelY)
+        binding.tvValAccelZ.text = String.format(java.util.Locale.US, "%+.2f", state.accelZ)
+        binding.tvValAccelFwd.text = String.format(java.util.Locale.US, "%+.2f", state.linAccelFwd)
+
+        binding.tvValGyroX.text = String.format(java.util.Locale.US, "%+.1f", state.gyroXDeg)
+        binding.tvValGyroY.text = String.format(java.util.Locale.US, "%+.1f", state.gyroYDeg)
+        binding.tvValGyroZ.text = String.format(java.util.Locale.US, "%+.1f", state.gyroZDeg)
+        binding.tvValGyroBias.text = String.format(java.util.Locale.US, "%.3f", state.gyroBiasDegPerSec)
+
+        binding.tvValBaroPress.text = String.format(java.util.Locale.US, "%.1f", state.pressureHpa)
+        binding.tvValBaroAlt.text = String.format(java.util.Locale.US, "%.0f", state.baroAltitudeM)
+        binding.tvValBaroClimb.text = String.format(java.util.Locale.US, "%+.1f", state.verticalSpeedMs)
+        binding.tvValBaroGrade.text = String.format(java.util.Locale.US, "%+.1f%%", state.gradePct)
+
+        binding.tvValMagX.text = String.format(java.util.Locale.US, "%.1f", state.magX)
+        binding.tvValMagY.text = String.format(java.util.Locale.US, "%.1f", state.magY)
+        binding.tvValMagZ.text = String.format(java.util.Locale.US, "%.1f", state.magZ)
+        binding.tvValMagYaw.text = String.format(java.util.Locale.US, "%.0f°", state.magneticHeadingDeg)
+
+        binding.tvValGnssLat.text = String.format(java.util.Locale.US, "%.6f°", activeLat)
+        binding.tvValGnssLon.text = String.format(java.util.Locale.US, "%.6f°", activeLon)
+        binding.tvValPitch.text = String.format(java.util.Locale.US, "%+.1f°", state.pitchDeg)
+        binding.tvValRoll.text = String.format(java.util.Locale.US, "%+.1f°", state.rollDeg)
+
+        binding.tvValGnssSats.text = "${state.satellitesInView} Sats"
+        binding.tvValGnssAcc.text = String.format(java.util.Locale.US, "±%.1fm σ", state.gnssAccuracyM)
+        val fixLabel = when {
+            state.mode == NavigationMode.PURE_DR -> "Dead Reckon"
+            state.gnssFixType.isNotBlank() -> state.gnssFixType
+            else -> "INS:LOCK"
+        }
+        binding.tvValGnssFix.text = fixLabel
+        binding.tvValGnssFix.setTextColor(if (state.mode == NavigationMode.PURE_DR) Color.parseColor("#EF4444") else Color.parseColor("#10B981"))
+
+        binding.tvValBusObd.text = if (state.isObdConnected) "OBD: CAN" else "STANDALONE"
+        binding.tvValBusLight.text = String.format(java.util.Locale.US, "%.0f lx", state.lightLux)
+
+        // Legacy compatibility strings
         binding.tvSensorMag.text = String.format(
             "Bx: %.1f, By: %.1f, Bz: %.1f µT\nMag: %.0f° (%s) | EKF: %.0f°",
             state.magX, state.magY, state.magZ,
@@ -3336,6 +3816,7 @@ class MainActivity : AppCompatActivity() {
             "X: %+.2f, Y: %+.2f, Z: %+.2f m/s²\nLin Fwd Accel: %+.2f m/s²",
             state.accelX, state.accelY, state.accelZ, state.linAccelFwd
         )
+        binding.viewCircularSpeedometer.setSpeed(state.speedKmh)
         binding.tvSensorBaro.text = String.format(
             "%.1f hPa | Alt: %.0f m\nClimb: %+.1f m/s | Grade: %+.1f%%",
             state.pressureHpa, state.baroAltitudeM, state.verticalSpeedMs, state.gradePct
@@ -3478,26 +3959,33 @@ class MainActivity : AppCompatActivity() {
             val radiusM = maxOf(2.0, state.uncertaintySigmaM * 3.0)
             updateUncertaintyCircle(point, radiusM)
 
-            // Trajectory management
-            if (trajectoryPoints.isNotEmpty() && point.distanceTo(trajectoryPoints.last()) > 5000.0) {
-                // Position jump — reset trajectory
-                trajectoryPoints.clear()
-                trajectoryPoints.add(point)
-            } else if (state.speedKmh > 0.8 && (trajectoryPoints.isEmpty() || point.distanceTo(trajectoryPoints.last()) >= 1.0)) {
-                trajectoryPoints.add(point)
-            } else if (trajectoryPoints.isEmpty()) {
-                trajectoryPoints.add(point)
-            }
-
-            // Update trajectory polylines
-            if (trajectoryPoints.size >= 2) {
-                trajectoryLine?.let { line ->
-                    line.latLngs = trajectoryPoints.toList()
-                    lm.update(line)
+            // Trajectory management (Historical breadcrumb trail)
+            if (state.hasActiveRoute || currentScreenState == AppScreenState.NAVIGATION) {
+                // In active turn-by-turn navigation, hide historical green breadcrumb trail
+                // so the map stays clean and only the route line is displayed
+                if (trajectoryPoints.isNotEmpty()) {
+                    trajectoryPoints.clear()
+                    trajectoryLine?.let { line -> line.latLngs = listOf(LatLng(0.0, 0.0)); lm.update(line) }
+                    trajectoryGlowLine?.let { line -> line.latLngs = listOf(LatLng(0.0, 0.0)); lm.update(line) }
                 }
-                trajectoryGlowLine?.let { line ->
-                    line.latLngs = trajectoryPoints.toList()
-                    lm.update(line)
+            } else {
+                // Free-drive mode: only accumulate trail when actually moving (> 4.0 km/h) to prevent indoor GPS jitter
+                if (trajectoryPoints.isNotEmpty() && point.distanceTo(trajectoryPoints.last()) > 5000.0) {
+                    trajectoryPoints.clear()
+                    trajectoryPoints.add(point)
+                } else if (state.speedKmh >= 4.0 && (trajectoryPoints.isEmpty() || point.distanceTo(trajectoryPoints.last()) >= 3.0)) {
+                    trajectoryPoints.add(point)
+                }
+
+                if (trajectoryPoints.size >= 2) {
+                    trajectoryLine?.let { line ->
+                        line.latLngs = trajectoryPoints.toList()
+                        lm.update(line)
+                    }
+                    trajectoryGlowLine?.let { line ->
+                        line.latLngs = trajectoryPoints.toList()
+                        lm.update(line)
+                    }
                 }
             }
 
@@ -3507,26 +3995,75 @@ class MainActivity : AppCompatActivity() {
                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 18.0))
             }
 
-            // Update vehicle marker position and rotation
-            vehicleSymbol?.let { sym ->
-                sym.latLng = point
-                sym.iconRotate = activeHeading.toFloat()
-                sm.update(sym)
+            // Update vehicle marker position and rotation (Always tracks actual motion)
+            val prevPt = lastSymbolLatLng
+            val distFromLastM = if (prevPt != null) point.distanceTo(prevPt) else 999.0
+            val headingDiffDeg = Math.abs(activeHeading.toFloat() - lastSymbolHeading)
+
+            if (prevPt == null || distFromLastM > 0.35 || headingDiffDeg > 1.0f) {
+                lastSymbolLatLng = point
+                lastSymbolHeading = activeHeading.toFloat()
+                vehicleSymbol?.let { sym ->
+                    sym.latLng = point
+                    sym.iconRotate = activeHeading.toFloat()
+                    sm.update(sym)
+                }
             }
 
-            // Camera follow
-            if (isFollowingVehicle && shouldRedraw(activeLat, activeLon, activeHeading.toFloat())) {
+            // Dynamically anchor route start to live vehicle marker & trim passed waypoints
+            if (state.hasActiveRoute && routePoints.size >= 2) {
+                var closestIdx = 0
+                var minDistM = Double.MAX_VALUE
+                val checkLimit = minOf(6, routePoints.size - 1)
+                for (i in 0..checkLimit) {
+                    val d = point.distanceTo(routePoints[i])
+                    if (d < minDistM) {
+                        minDistM = d
+                        closestIdx = i
+                    }
+                }
+                // Trim points passed behind vehicle
+                if (closestIdx > 0 && minDistM < 35.0) {
+                    for (k in 0 until closestIdx) {
+                        if (routePoints.size > 2) {
+                            routePoints.removeAt(0)
+                        }
+                    }
+                }
+                // Lock the very first point of the route polyline directly to the vehicle marker!
+                routePoints[0] = point
+                routeCasingLine?.let { line -> line.latLngs = routePoints; lm.update(line) }
+                routeLine?.let { line -> line.latLngs = routePoints; lm.update(line) }
+                routeDashLine?.let { line -> line.latLngs = routePoints; lm.update(line) }
+            }
+
+            // Camera follow: Preserves user-chosen 3D perspective tilt & zoom (Google Maps behavior)
+            if (!isUserGesturing && isFollowingVehicle && shouldRedraw(activeLat, activeLon, activeHeading.toFloat())) {
                 lastRenderedLat = activeLat
                 lastRenderedLon = activeLon
                 lastRenderedHeading = activeHeading.toFloat()
 
+                val currentTilt = map.cameraPosition.tilt
+                val currentZoom = map.cameraPosition.zoom
+                val currentBearing = map.cameraPosition.bearing
+
+                val targetTilt = if (isTrackUpEnabled) {
+                    if (currentTilt > 5.0) currentTilt else 45.0
+                } else {
+                    currentTilt
+                }
+
+                val targetBearing = if (isTrackUpEnabled) {
+                    activeHeading
+                } else {
+                    currentBearing
+                }
+
                 val builder = CameraPosition.Builder()
                     .target(point)
-
-                if (isTrackUpEnabled) {
-                    builder.bearing(activeHeading)
-                    builder.tilt(45.0) // Driving perspective tilt!
-                }
+                    .zoom(if (currentZoom > 1.0) currentZoom else 17.5)
+                    .tilt(targetTilt)
+                    .bearing(targetBearing)
 
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(builder.build()), 150)
             }
@@ -3535,7 +4072,7 @@ class MainActivity : AppCompatActivity() {
             val currentBearing = map.cameraPosition.bearing
             binding.fabCompass.rotation = -currentBearing.toFloat()
 
-            // Trail color theming
+            // Trail color theming (Only update GPU layer when color actually changes)
             val trailColor = when {
                 state.mode == NavigationMode.PURE_DR -> "#B388FF"
                 isNightMode -> "#4FC3F7"
@@ -3546,37 +4083,37 @@ class MainActivity : AppCompatActivity() {
                 isNightMode -> "#604FC3F7"
                 else -> "#6000E676"
             }
-            trajectoryLine?.let { line ->
-                line.lineColor = ColorUtils.colorToRgbaString(Color.parseColor(trailColor))
-                lm.update(line)
-            }
-            trajectoryGlowLine?.let { line ->
-                line.lineColor = ColorUtils.colorToRgbaString(Color.parseColor(glowColor))
-                lm.update(line)
+            if (lastAppliedTrailColor != trailColor) {
+                lastAppliedTrailColor = trailColor
+                trajectoryLine?.let { line ->
+                    line.lineColor = ColorUtils.colorToRgbaString(Color.parseColor(trailColor))
+                    lm.update(line)
+                }
+                trajectoryGlowLine?.let { line ->
+                    line.lineColor = ColorUtils.colorToRgbaString(Color.parseColor(glowColor))
+                    lm.update(line)
+                }
             }
         }
     }
 
-    // ── Night Mode Style Switching (Always Dark Monochrome Vector) ──
+    // ── Night Mode Style Switching (Disabled per user request) ──
     private fun applyNightMode() {
-        if (currentViewType == MapViewType.SATELLITE_VIEW) return
-        val targetStyle = STYLE_DARK
-        mapLibreMap?.let { map ->
-            map.setStyle(targetStyle) { style ->
-                reinitializeMapAnnotations(map, style)
-            }
-        }
+        // Dark mode is disabled for now
     }
 
-    // ── Map Layer Switching ──
+    // ── Map Layer Switching (Interchanges between Satellite and White Mode) ──
     private fun setMapLayer(viewType: MapViewType) {
         val map = mapLibreMap ?: return
         currentViewType = viewType
 
         when (viewType) {
             MapViewType.OSM_VIEW -> {
-                val targetStyle = STYLE_DARK
-                map.setStyle(targetStyle) { style ->
+                // White Mode (Always clean STYLE_LIGHT)
+                isLightMode = true
+                isNightMode = false
+                cleanupAnnotationManagers()
+                map.setStyle(STYLE_LIGHT) { style ->
                     reinitializeMapAnnotations(map, style)
                 }
                 binding.fabLayers.setColorFilter(Color.parseColor("#000000"))
@@ -3585,13 +4122,13 @@ class MainActivity : AppCompatActivity() {
                 binding.btnSatView.setBackgroundColor(Color.TRANSPARENT)
                 binding.btnSatView.setTextColor(Color.parseColor("#A1A1AA"))
                 map.setMaxZoomPreference(22.0)
-                Toast.makeText(this, "Vector Map Active", Toast.LENGTH_SHORT).show()
             }
             MapViewType.SATELLITE_VIEW -> {
                 // High-resolution satellite raster layer with overzoom
                 map.setMaxZoomPreference(21.0)
                 val tileSet = TileSet("tileset", SATELLITE_URL)
                 tileSet.maxZoom = 20.0f
+                cleanupAnnotationManagers()
                 map.setStyle(Style.Builder().fromUri(STYLE_POSITRON).withSource(
                     RasterSource("sat-source", tileSet, 256)
                 ).withLayer(
@@ -3604,7 +4141,6 @@ class MainActivity : AppCompatActivity() {
                 binding.btnSatView.setTextColor(Color.WHITE)
                 binding.btnOsmView.setBackgroundColor(Color.TRANSPARENT)
                 binding.btnOsmView.setTextColor(Color.parseColor("#A1A1AA"))
-                Toast.makeText(this, "Satellite View Active", Toast.LENGTH_SHORT).show()
             }
         }
     }
