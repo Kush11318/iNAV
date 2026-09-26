@@ -12,7 +12,7 @@
 ---
 
 ## 📑 Table of Contents
-1. [Executive Summary](#-executive-summary--the-sih-2026-challenge)
+1. [Executive Summary](#-executive-summary)
 2. [The Physics Problem: Why Double-Integration Fails](#-the-physics-problem-why-double-integration-fails)
 3. [Empirical Benchmark Achievements (Held-Out 56-Outage Test Set)](#-empirical-benchmark-achievements-held-out-56-outage-test-set)
 4. [Scientific Presentation Visualizations](#-scientific-presentation-visualizations)
@@ -414,7 +414,7 @@ The iNAV mobile application is not a prototype script — it is a production-gra
 
 ## 🥊 Head-to-Head Architectural Comparison (iNAV vs. Alternative Approaches)
 
-| Architectural Dimension | Pedestrian-Only Models (e.g. `dead-reckoning`, RoNIN, OxIOD) | Conventional Navigation Apps (Google / Apple Maps) | **iNAV Full System (SIH 2026)** |
+| Architectural Dimension | Pedestrian-Only Models (e.g. `dead-reckoning`, RoNIN, OxIOD) | Conventional Navigation Apps (Google / Apple Maps) | **iNAV Full System** |
 | :--- | :--- | :--- | :--- |
 | **Target Operational Domain** | Indoor pedestrian walking only ($1.2\text{ m/s}$ walking corridors) | General consumer navigation (Assumes continuous GNSS) | **Vehicular & Highway Driving ($0$ to $120\text{ km/h}$) + Pedestrian Mode** |
 | **Forward Velocity Source** | Neural TCN displacement from foot swings ($1\text{s}$ windows) | Constant velocity extrapolation from last known GPS fix | **Rear-Wheel CAN Odometry ($0.15\text{ m/s}$) + Neural VelocityNet fallback** |
@@ -560,4 +560,4 @@ The architectural decisions in iNAV stand on peer-reviewed, proven aerospace and
 ---
 
 ## 📄 License
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details. Built for the **Smart India Hackathon 2026** (Problem Statement `SIH26168`).
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
