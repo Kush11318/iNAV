@@ -1,6 +1,5 @@
 # 🧭 iNAV: AI-Augmented Multi-Rate Inertial Dead Reckoning & Navigation System
 
-[![SIH 2026](https://img.shields.io/badge/SIH%202026-Problem%20SIH26168%20%7C%20ISRO-blue.svg?style=for-the-badge&logo=target)](https://www.sih.gov.in/)
 [![Android](https://img.shields.io/badge/Platform-Android%2010+%20(API%2029+)-3DDC84.svg?style=for-the-badge&logo=android&logoColor=white)](android/)
 [![C++20 Core](https://img.shields.io/badge/Core-C%2B%2B20%20%2F%20Eigen3%20%2F%20CMake-00599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)](cpp/)
 [![PyTorch & ONNX](https://img.shields.io/badge/AI-PyTorch%20%2F%20ONNX%20Runtime-EE4C2C.svg?style=for-the-badge&logo=pytorch&logoColor=white)](modules/)
@@ -13,7 +12,7 @@
 ---
 
 ## 📑 Table of Contents
-1. [Executive Summary & The SIH 2026 Challenge](#-executive-summary--the-sih-2026-challenge)
+1. [Executive Summary](#-executive-summary--the-sih-2026-challenge)
 2. [The Physics Problem: Why Double-Integration Fails](#-the-physics-problem-why-double-integration-fails)
 3. [Empirical Benchmark Achievements (Held-Out 56-Outage Test Set)](#-empirical-benchmark-achievements-held-out-56-outage-test-set)
 4. [Scientific Presentation Visualizations](#-scientific-presentation-visualizations)
@@ -33,9 +32,8 @@
 
 ---
 
-## 🚀 Executive Summary & The SIH 2026 Challenge
+## 🚀 Executive Summary 
 
-* **Problem Statement:** `SIH26168` — *Dead Reckoning without GPS / NavIC for Vehicular & Pedestrian Navigation* (Ministry of Earth Sciences / ISRO).
 * **The Real-World Operational Challenge:** Satellites drop the moment a vehicle enters a mountain tunnel, subterranean pass, city underpass, or urban canyon. Conventional navigation apps (Google Maps, Apple Maps) freeze the vehicle icon, extrapolate blindly at constant speed, or project the car hundreds of meters off-course into rivers and opposing lanes.
 * **The iNAV Solution:** **iNAV** is an end-to-end, multi-sensor, multi-rate Intelligent Dead Reckoning (IDR) navigation engine and native Android production application. It couples smartphone MEMS inertial sensors (accelerometer, gyroscope, magnetometer), optional CAN-bus / OBD-II wheel odometry, a deep temporal CNN-GRU displacement regressor, a 7-state Unscented Kalman Filter (UKF), standstill Zero-Velocity / Zero-Angular-Rate Updates (ZUPT/ZARU), and OpenStreetMap (OSM) Hidden Markov Model (HMM) 1D road-normal map matching.
 
